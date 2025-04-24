@@ -28,6 +28,11 @@ const login = async(req,res)=>{
             rol:"Super Administrador"})
     }
     
+    if (password.length < 6) return res.status(400).json({msg:"Lo sentimos, la contraseña debe tener al menos 6 caracteres"})
+    
+    const validacionEmail = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/;
+    if (!validacionEmail.test(email)) return res.status(400).json({msg:"Lo sentimos, el formato de email no es válido"})
+
     const administradorBDD = await Administrador.findOne({email}).select("-__v -token -updatedAt -createdAt")
     
     if(administradorBDD?.status===false) return res.status(403).json({msg:"Lo sentimos, el usuario se encuentra deshabilitado"})

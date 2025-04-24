@@ -24,8 +24,7 @@ const detalleParada = async (req, res) => {
   }
 
   try {
-    const parada = await Parada.findById(id).populate('rutas', 'nombre')
-      .populate('corredor', 'nombre');
+    const parada = await Parada.findById(id).populate('rutas', 'nombre').populate('corredor', 'nombre_corredor');
     if (!parada) {
       return res.status(404).json({ msg: `La parada con ID ${id} no fue encontrada.` });
     }
