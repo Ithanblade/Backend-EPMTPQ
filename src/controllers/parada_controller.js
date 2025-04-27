@@ -132,6 +132,10 @@ const habilitarParada = async (req, res) => {
       return res.status(404).json({ msg: `La parada con ID ${id} no fue encontrada.` });
     }
 
+    if (parada.status) {
+      return res.status(400).json({ msg: `La parada con ID ${id} ya está habilitada.` });
+    }
+
     const paradaHabilitada = await Parada.findByIdAndUpdate(id, { status: true }, { new: true });
     res.status(200).json({ msg: "Parada habilitada correctamente.", paradaHabilitada });
 
@@ -152,6 +156,10 @@ const deshabilitarParada = async (req, res) => {
     const parada = await Parada.findById(id);
     if (!parada) {
       return res.status(404).json({ msg: `La parada con ID ${id} no fue encontrada.` });
+    }
+
+    if (!parada.status) {
+      return res.status(400).json({ msg: `La parada con ID ${id} ya está deshabilitada.` });
     }
 
     const paradaDeshabilitada = await Parada.findByIdAndUpdate(id, { status: false }, { new: true });

@@ -89,14 +89,21 @@ const perfil =(req,res)=>{
 // Método para el registro
 const registro = async (req,res)=>{
     // Desestructurar los campos 
-    const {email} = req.body
-    // Validar todos los campos llenos
-    if (Object.values(req.body).includes("")) return res.status(400).json({msg:"Lo sentimos, debes llenar todos los campos"})
-    // Obtener el usuario de la BDD en base al email
-    const verificarEmailBDD = await Administrador.findOne({email})
-    // Validar que el email sea nuevo
-    if(verificarEmailBDD) return res.status(400).json({msg:"Lo sentimos, el email ya se encuentra registrado"})
+    const {email,nombre,apellido,direccion,telefono} = req.body
+    if (Object.values(req.body).includes("")) return res.status(404).json({msg:"Lo sentimos, debes llenar todos los campos"})
+    const validacionEmail = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/;
+    if (!validacionEmail.test(email)) return res.status(400).json({msg:"Lo sentimos, el formato de email no es válido"})
+    if (telefono.length < 10) return res.status(400).json({msg:"Lo sentimos, el teléfono debe tener al menos 10 caracteres"})
+    if (telefono.length > 15) return res.status(400).json({msg:"Lo sentimos, el teléfono no debe tener más de 15 caracteres"})
+    if (direccion.length < 5) return res.status(400).json({msg:"Lo sentimos, la dirección debe tener al menos 10 caracteres"})
+    if (nombre.length < 3) return res.status(400).json({msg:"Lo sentimos, el nombre debe tener al menos 3 caracteres"})
+    if (apellido.length < 3) return res.status(400).json({msg:"Lo sentimos, el apellido debe tener al menos 3 caracteres"})
 
+    // Validar si el email ya existe
+    const administradorBDD = await Administrador.findOne
+    ({email})
+    if(administradorBDD) return res.status(404).json({msg:"Lo sentimos, el email ya se encuentra registrado"})
+    
     // Crear la instancia del Administrador
     const nuevoAdministrador = new Administrador(req.body)
     
@@ -142,7 +149,7 @@ const actualizarPerfil = async (req,res)=>{
         const administradorBDDMail = await Administrador.findOne({email:req.body.email})
         if (administradorBDDMail)
         {
-            return res.status(404).json({msg:`Lo sentimos, el existe ya se encuentra registrado`})  
+            return res.status(404).json({msg:`Lo sentimos, el email ya se encuentra registrado`})
         }
     }
 	
