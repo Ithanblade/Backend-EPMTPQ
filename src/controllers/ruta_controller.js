@@ -76,7 +76,7 @@ const registrarRuta = async (req, res) => {
     }
 };
 
-// Actualizar una ruta (sin modificar paradas, solo ID del corredor y datos básicos)
+// Actualizar una ruta 
 const actualizarRuta = async (req, res) => {
     const { id } = req.params;
     const { nombre, recorrido, horario, sentido, corredor } = req.body;
@@ -116,8 +116,8 @@ const actualizarRuta = async (req, res) => {
     }
 };
 
-// Habilitar o deshabilitar una ruta (un solo método)
-const cambiarEstadoRuta = async (req, res, estado) => {
+
+const habilitarRuta = async(req, res) => {
     const { id } = req.params;
     if (!validarObjectId(id, res)) return;
 
@@ -127,37 +127,44 @@ const cambiarEstadoRuta = async (req, res, estado) => {
             return res.status(404).json({ msg: `La ruta con ID ${id} no fue encontrada.` });
         }
 
-        const rutaActualizada = await Ruta.findByIdAndUpdate(id, { estado }, { new: true });
-        const estadoTexto = estado ? "habilitada" : "deshabilitada";
-        res.status(200).json({ msg: `Ruta ${estadoTexto} correctamente.`, rutaActualizada });
-
-    } catch (error) {
-        res.status(500).json({ msg: `Error al ${estado ? "habilitar" : "deshabilitar"} la ruta`, error: error.message });
-    }
-};
-
-const habilitarRuta = (req, res) => cambiarEstadoRuta(req, res, true);
-const deshabilitarRuta = (req, res) => cambiarEstadoRuta(req, res, false);
-
-// Listar rutas de un corredor
-const listarRutasPorCorredor = async (req, res) => {
-    const { corredorId } = req.params;
-    if (!validarObjectId(corredorId, res)) return;
-
-    try {
-        const rutas = await Ruta.find({ corredor: corredorId })
-            .select("-createdAt -updatedAt -__v")
-            .lean();
-
-        if (!rutas.length) {
-            return res.status(404).json({ msg: "No se encontraron rutas para este corredor." });
+        if (ruta.estado) {
+            return res.status(400).json({ msg: "La ruta ya está habilitada." });
         }
 
-        res.status(200).json(rutas);
-    } catch (error) {
-        res.status(500).json({ msg: "Error al obtener las rutas del corredor", error: error.message });
+        ruta.estado = true;
+        await ruta.save();
+
+        res.status(200).json({ msg: "Ruta habilitada exitosamente." });
     }
-};
+    catch (error) {
+        res.status(500).json({ msg: "Error al habilitar la ruta", error: error.message });
+    }
+    
+}
+const deshabilitarRuta = async(req, res) => {
+    const { id } = req.params;
+    if (!validarObjectId(id, res)) return;
+
+    try {
+        const ruta = await Ruta.findById(id);
+        if (!ruta) {
+            return res.status(404).json({ msg: `La ruta con ID ${id} no fue encontrada.` });
+        }
+
+        if (!ruta.estado) {
+            return res.status(400).json({ msg: "La ruta ya está deshabilitada." });
+        }
+
+        ruta.estado = false;
+        await ruta.save();
+
+        res.status(200).json({ msg: "Ruta deshabilitada exitosamente." });
+    }
+    catch (error) {
+        res.status(500).json({ msg: "Error al deshabilitar la ruta", error: error.message });
+    }
+}
+
 
 export {
     listarRutas,
