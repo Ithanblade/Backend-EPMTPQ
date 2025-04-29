@@ -1,5 +1,5 @@
 // Importar el modelo 
-import { sendMailToUser, sendMailToRecoveryPassword } from "../config/nodemailer.js"
+import { sendMailToUser } from "../config/nodemailer.js"
 import generarJWT from "../helpers/crearJWT.js"
 import Administrador from "../models/Admin.js"
 import mongoose from "mongoose";
@@ -190,6 +190,7 @@ const habilitarAdministrador = async (req,res)=>{
     if( !mongoose.Types.ObjectId.isValid(id) ) return res.status(404).json({msg:`Lo sentimos, debe ser un id válido`});
     const administradorBDD = await Administrador.findById(id)
     if(!administradorBDD) return res.status(404).json({msg:`Lo sentimos, no existe el Administrador ${id}`})
+    if(administradorBDD.status===true) return res.status(404).json({msg:"Lo sentimos, el usuario ya se encuentra habilitado"})
     administradorBDD.status = true
     await administradorBDD.save()
     res.status(200).json({msg:"Administrador habilitado correctamente"})
@@ -200,9 +201,12 @@ const deshabilitarAdministrador = async (req,res)=>{
     if( !mongoose.Types.ObjectId.isValid(id) ) return res.status(404).json({msg:`Lo sentimos, debe ser un id válido`});
     const administradorBDD = await Administrador.findById(id)
     if(!administradorBDD) return res.status(404).json({msg:`Lo sentimos, no existe el Administrador ${id}`})
+
+    if(administradorBDD.status===false) return res.status(404).json({msg:"Lo sentimos, el usuario ya se encuentra deshabilitado"})
+    
     administradorBDD.status = false
     await administradorBDD.save()
-    res.status(200).json({msg:"Administrador eliminado correctamente"})
+    res.status(200).json({msg:"Administrador deshabilitado correctamente"})
 }
 
 
