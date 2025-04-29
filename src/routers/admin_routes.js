@@ -1,17 +1,14 @@
-// Importar Router de Express
 import { Router } from 'express'
 
-// Crear una instancia de Router() 
 const router = Router()
 
-// Importar los métodos del controlador 
 import {
     login,
     perfil,
     registro,
     listarAdministradores,
     detalleAdministrador,
-    actualizarPerfil,
+    actualizarAdministrador,
     deshabilitarAdministrador,
     habilitarAdministrador,
 } from "../controllers/admin_controller.js";
@@ -38,7 +35,7 @@ router.get("/perfil", verificarAutenticacion, perfil,);
 router.get("/administrador/:id", verificarAutenticacion, detalleAdministrador);
 
 
-router.put("/administrador/:id", verificarAutenticacionSuperAdministrador, actualizarPerfil);
+router.put("/administrador/:id", verificarAutenticacionSuperAdministrador, actualizarAdministrador);
 
 
 router.put("/administrador/habilitar/:id", verificarAutenticacionSuperAdministrador, habilitarAdministrador);
@@ -47,7 +44,6 @@ router.put("/administrador/habilitar/:id", verificarAutenticacionSuperAdministra
 router.put("/administrador/deshabilitar/:id", verificarAutenticacionSuperAdministrador, deshabilitarAdministrador);
 
 
-// Exportar la variable router
 export default router
 
 

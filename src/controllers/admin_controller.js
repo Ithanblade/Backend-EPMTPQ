@@ -1,4 +1,3 @@
-
 // Importar el modelo 
 import { sendMailToUser, sendMailToRecoveryPassword } from "../config/nodemailer.js"
 import generarJWT from "../helpers/crearJWT.js"
@@ -93,10 +92,15 @@ const registro = async (req,res)=>{
     if (Object.values(req.body).includes("")) return res.status(404).json({msg:"Lo sentimos, debes llenar todos los campos"})
     const validacionEmail = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/;
     if (!validacionEmail.test(email)) return res.status(400).json({msg:"Lo sentimos, el formato de email no es válido"})
+
     if (telefono.length < 10) return res.status(400).json({msg:"Lo sentimos, el teléfono debe tener al menos 10 caracteres"})
+
     if (telefono.length > 15) return res.status(400).json({msg:"Lo sentimos, el teléfono no debe tener más de 15 caracteres"})
+
     if (direccion.length < 5) return res.status(400).json({msg:"Lo sentimos, la dirección debe tener al menos 10 caracteres"})
+
     if (nombre.length < 3) return res.status(400).json({msg:"Lo sentimos, el nombre debe tener al menos 3 caracteres"})
+        
     if (apellido.length < 3) return res.status(400).json({msg:"Lo sentimos, el apellido debe tener al menos 3 caracteres"})
 
     // Validar si el email ya existe
@@ -138,7 +142,7 @@ const detalleAdministrador = async(req,res)=>{
 
 
 // Método para actualizar el perfil
-const actualizarPerfil = async (req,res)=>{
+const actualizarAdministrador = async (req,res)=>{
     const {id} = req.params
     if( !mongoose.Types.ObjectId.isValid(id) ) return res.status(404).json({msg:`Lo sentimos, debe ser un id válido`});
     if (Object.values(req.body).includes("")) return res.status(400).json({msg:"Lo sentimos, debes llenar todos los campos"})
@@ -153,17 +157,31 @@ const actualizarPerfil = async (req,res)=>{
         }
     }
 	
+    if (req.body.telefono.length < 10) return res.status(400).json({msg:"Lo sentimos, el teléfono debe tener al menos 10 caracteres"})
+    if (req.body.telefono.length > 15) return res.status(400).json({msg:"Lo sentimos, el teléfono no debe tener más de 15 caracteres"})
+    if (req.body.direccion.length < 5) return res.status(400).json({msg:"Lo sentimos, la dirección debe tener al menos 10 caracteres"})
+    if (req.body.nombre.length < 3) return res.status(400).json({msg:"Lo sentimos, el nombre debe tener al menos 3 caracteres"})
+    if (req.body.apellido.length < 3) return res.status(400).json({msg:"Lo sentimos, el apellido debe tener al menos 3 caracteres"})
+    const validacionEmail = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/;
+    if (!validacionEmail.test(req.body.email)) return res.status(400).json({msg:"Lo sentimos, el formato de email no es válido"})
+    
+
     const password = Math.random().toString(36).substring(2)
 
-    administradorBDD.nombre = req.body.nombre || administradorBDD?.nombre
-    administradorBDD.apellido = req.body.apellido  || administradorBDD?.apellido
-    administradorBDD.direccion = req.body.direccion ||  administradorBDD?.direccion
-    administradorBDD.telefono = req.body.telefono || administradorBDD?.telefono
-    administradorBDD.email = req.body.email || administradorBDD?.email
-    administradorBDD.password = req.body.password ? await administradorBDD.encrypPassword("Admin"+password+"Quito") : administradorBDD?.password
-    sendMailToUser(administradorBDD.email,"Admin"+password+"Quito")
-    await administradorBDD.save()
-    res.status(200).json({msg:"Perfil actualizado correctamente"})
+    // Encriptar el password
+    req.body.password = await administradorBDD.encrypPassword("Admin"+password+"Quito")
+    // Enviar el correo electrónico
+    sendMailToUser(req.body.email,"Admin"+password+"Quito")
+    // Actualizar el administrador
+    const administradorActualizado = await Administrador.findByIdAndUpdate(id,req.body,{new:true})
+    // Enviar el mensaje
+    try {
+        await administradorActualizado.save()
+        res.status(200).json({msg:"Administrador actualizado correctamente"})
+    }
+    catch (error) {
+        res.status(500).json({msg:"Lo sentimos, hubo un error al actualizar el Administrador"})
+    }
 }
 
 
@@ -195,7 +213,7 @@ export {
     registro,
     listarAdministradores,
     detalleAdministrador,
-    actualizarPerfil,
+    actualizarAdministrador,
     habilitarAdministrador,
     deshabilitarAdministrador,
 }

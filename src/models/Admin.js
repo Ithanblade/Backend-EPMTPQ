@@ -1,10 +1,7 @@
-// Importar el Schema y el modelo de mongoose
 import {Schema, model} from 'mongoose'
-// Importar bcrypt para cifrar las contraseñas
 import bcrypt from "bcryptjs"
 
 
-// Crear el Schema "atributos de la tabla de la BDD"
 const administradorSchema = new Schema({
     nombre:{
         type:String,
@@ -44,24 +41,17 @@ const administradorSchema = new Schema({
     timestamps:true
 })
 
-// Método para cifrar el password del veterinario
+// Método para cifrar el password
 administradorSchema.methods.encrypPassword = async function(password){
     const salt = await bcrypt.genSalt(10)
     const passwordEncryp = await bcrypt.hash(password,salt)
     return passwordEncryp
 }
 
-// Método para verificar si el password ingresado es el mismo de la BDD
+// Método para verificar si el password ingresado es el mismo
 administradorSchema.methods.matchPassword = async function(password){
     const response = await bcrypt.compare(password,this.password)
     return response
 }
 
-// Método para crear un token 
-administradorSchema.methods.crearToken = function(){
-    const tokenGenerado = this.token = Math.random().toString(36).slice(2)
-    return tokenGenerado
-}
-
-// Luego exportar el modelo
 export default model('Administradores',administradorSchema)
