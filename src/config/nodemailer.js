@@ -14,46 +14,24 @@ let transporter = nodemailer.createTransport({
 });
 
 
-const sendMailToUser = (userMail, password) => {
+const sendMailToUser = (userMail, password, token) => {
+    const link = `${process.env.URL_FRONTEND}cambiar-password?token=${token}`;
 
-    let mailOptions = {
+    const mailOptions = {
         from: process.env.USER_MAILTRAP,
         to: userMail,
-        subject: "Inicia Sesión cambiando tu contraseña",
-        html: `<p>Hola, haz clic <a href="${process.env.URL_FRONTEND}login/">aquí</a> para iniciar sesión.</p>
-                <hr>
-                <p>Contraseña de acceso: ${password}</p>`
+        subject: "Bienvenido a la EPMTPQ",
+        html: `
+            <p>Hola, haz clic <a href="${link}">aquí</a> para cambiar tu contraseña.</p>
+            <hr>
+            <p>Tu contraseña temporal es: <strong>${password}</strong></p>`
     };
-    
 
-    transporter.sendMail(mailOptions, function(error, info){
-        if (error) {
-            console.log(error);
-        } else {
-            console.log('Correo enviado: ' + info.response);
-        }
+    transporter.sendMail(mailOptions, (error, info) => {
+        if (error) console.log(error);
+        else console.log('Correo enviado: ' + info.response);
     });
 };
-
-
-// send mail with defined transport object
-const sendMailToRecoveryPassword = async(userMail,token)=>{
-    let info = await transporter.sendMail({
-    from: 'admin@pasajeros.com',
-    to: userMail,
-    subject: "Correo para reestablecer tu contraseña",
-    html: `
-    <h1>Sistema de Transporte</h1>
-    <hr>
-    <a href=${process.env.URL_FRONTEND}recuperar-password/${token}>Clic para reestablecer tu contraseña</a>
-    <hr>
-    <footer>Quito te da la Bienvenida!</footer>
-    `
-    });
-    console.log("Mensaje enviado satisfactoriamente: ", info.messageId);
-}
-
-
 
 
 
@@ -61,7 +39,6 @@ const sendMailToRecoveryPassword = async(userMail,token)=>{
 
 export {
     sendMailToUser,
-    sendMailToRecoveryPassword
 }
 
 

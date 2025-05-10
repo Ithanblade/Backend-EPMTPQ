@@ -86,44 +86,49 @@ const perfil =(req,res)=>{
 }
 
 // Método para el registro
-const registro = async (req,res)=>{
-    // Desestructurar los campos 
-    const {email,nombre,apellido,direccion,telefono} = req.body
-    if (Object.values(req.body).includes("")) return res.status(404).json({msg:"Lo sentimos, debes llenar todos los campos"})
+const registro = async (req, res) => {
+    const { email, nombre, apellido, direccion, telefono } = req.body;
+
+    if (Object.values(req.body).includes("")) 
+        return res.status(404).json({ msg: "Lo sentimos, debes llenar todos los campos" });
+
     const validacionEmail = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/;
-    if (!validacionEmail.test(email)) return res.status(400).json({msg:"Lo sentimos, el formato de email no es válido"})
+    if (!validacionEmail.test(email)) 
+        return res.status(400).json({ msg: "Lo sentimos, el formato de email no es válido" });
 
-    if (telefono.length < 10) return res.status(400).json({msg:"Lo sentimos, el teléfono debe tener al menos 10 caracteres"})
+    if (telefono.length < 10 || telefono.length > 15) 
+        return res.status(400).json({ msg: "Teléfono debe tener entre 10 y 15 caracteres" });
 
-    if (telefono.length > 15) return res.status(400).json({msg:"Lo sentimos, el teléfono no debe tener más de 15 caracteres"})
+    if (direccion.length < 5) 
+        return res.status(400).json({ msg: "La dirección debe tener al menos 5 caracteres" });
 
-    if (direccion.length < 5) return res.status(400).json({msg:"Lo sentimos, la dirección debe tener al menos 10 caracteres"})
+    if (nombre.length < 3 || apellido.length < 3) 
+        return res.status(400).json({ msg: "Nombre y apellido deben tener al menos 3 caracteres" });
 
-    if (nombre.length < 3) return res.status(400).json({msg:"Lo sentimos, el nombre debe tener al menos 3 caracteres"})
-        
-    if (apellido.length < 3) return res.status(400).json({msg:"Lo sentimos, el apellido debe tener al menos 3 caracteres"})
+    // Validar si ya existe
+    const administradorBDD = await Administrador.findOne({ email });
+    if (administradorBDD) 
+        return res.status(404).json({ msg: "Lo sentimos, el email ya se encuentra registrado" });
 
-    // Validar si el email ya existe
-    const administradorBDD = await Administrador.findOne
-    ({email})
-    if(administradorBDD) return res.status(404).json({msg:"Lo sentimos, el email ya se encuentra registrado"})
-    
-    // Crear la instancia del Administrador
-    const nuevoAdministrador = new Administrador(req.body)
-    
-    // Crear un password
-    const password = Math.random().toString(36).substring(2)
+    // Crear el nuevo administrador
+    const nuevoAdministrador = new Administrador(req.body);
 
-    // Encriptar el password
-    nuevoAdministrador.password = await nuevoAdministrador.encrypPassword("Admin"+password+"Quito")
+    // Contraseña temporal
+    const passwordTemporal = "Admin" + Math.random().toString(36).substring(2) + "Quito";
+    nuevoAdministrador.password = await nuevoAdministrador.encrypPassword(passwordTemporal);
 
-    // Enviar el correo electrónico
-    sendMailToUser(email,"Admin"+password+"Quito")
-    // Guaradar en BDD
-    await nuevoAdministrador.save()
-    // Imprimir el mensaje
-    res.status(200).json({msg:"Revisa tu correo electrónico para confirmar tu cuenta"})
-}
+    // Guardar en la BD
+    await nuevoAdministrador.save();
+
+    // Generar token temporal
+    const token = generarTokenTemporal(nuevoAdministrador._id);
+
+    // Enviar correo con token
+    sendMailToUser(email, passwordTemporal, token);
+
+    res.status(200).json({ msg: "Revisa tu correo electrónico para cambiar tu contraseña" });
+};
+
 
 // Método para listar Administradors
 const listarAdministradores = async (req,res)=>{
@@ -142,47 +147,85 @@ const detalleAdministrador = async(req,res)=>{
 
 
 // Método para actualizar el perfil
-const actualizarAdministrador = async (req,res)=>{
-    const {id} = req.params
-    if( !mongoose.Types.ObjectId.isValid(id) ) return res.status(404).json({msg:`Lo sentimos, debe ser un id válido`});
-    if (Object.values(req.body).includes("")) return res.status(400).json({msg:"Lo sentimos, debes llenar todos los campos"})
-    const administradorBDD = await Administrador.findById(id)
-    if(!administradorBDD) return res.status(404).json({msg:`Lo sentimos, no existe el Administrador ${id}`})
-    if (administradorBDD.email !=  req.body.email)
-    {
-        const administradorBDDMail = await Administrador.findOne({email:req.body.email})
-        if (administradorBDDMail)
-        {
-            return res.status(404).json({msg:`Lo sentimos, el email ya se encuentra registrado`})
+const actualizarAdministrador = async (req, res) => {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(404).json({ msg: `Lo sentimos, debe ser un id válido` });
+    }
+
+    if (Object.values(req.body).includes("")) {
+        return res.status(400).json({ msg: "Lo sentimos, debes llenar todos los campos" });
+    }
+
+    const administradorBDD = await Administrador.findById(id);
+    if (!administradorBDD) {
+        return res.status(404).json({ msg: `Lo sentimos, no existe el Administrador ${id}` });
+    }
+
+    if (administradorBDD.email !== req.body.email) {
+        const administradorBDDMail = await Administrador.findOne({ email: req.body.email });
+        if (administradorBDDMail) {
+            return res.status(404).json({ msg: `Lo sentimos, el email ya se encuentra registrado` });
         }
     }
-	
-    if (req.body.telefono.length < 10) return res.status(400).json({msg:"Lo sentimos, el teléfono debe tener al menos 10 caracteres"})
-    if (req.body.telefono.length > 15) return res.status(400).json({msg:"Lo sentimos, el teléfono no debe tener más de 15 caracteres"})
-    if (req.body.direccion.length < 5) return res.status(400).json({msg:"Lo sentimos, la dirección debe tener al menos 10 caracteres"})
-    if (req.body.nombre.length < 3) return res.status(400).json({msg:"Lo sentimos, el nombre debe tener al menos 3 caracteres"})
-    if (req.body.apellido.length < 3) return res.status(400).json({msg:"Lo sentimos, el apellido debe tener al menos 3 caracteres"})
+
+    if (req.body.telefono.length < 10 || req.body.telefono.length > 15) {
+        return res.status(400).json({ msg: "Lo sentimos, el teléfono debe tener entre 10 y 15 caracteres" });
+    }
+
+    if (req.body.direccion.length < 10) {
+        return res.status(400).json({ msg: "Lo sentimos, la dirección debe tener al menos 10 caracteres" });
+    }
+
+    if (req.body.nombre.length < 3) {
+        return res.status(400).json({ msg: "Lo sentimos, el nombre debe tener al menos 3 caracteres" });
+    }
+
+    if (req.body.apellido.length < 3) {
+        return res.status(400).json({ msg: "Lo sentimos, el apellido debe tener al menos 3 caracteres" });
+    }
+
     const validacionEmail = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/;
-    if (!validacionEmail.test(req.body.email)) return res.status(400).json({msg:"Lo sentimos, el formato de email no es válido"})
-    
+    if (!validacionEmail.test(req.body.email)) {
+        return res.status(400).json({ msg: "Lo sentimos, el formato de email no es válido" });
+    }
 
-    const password = Math.random().toString(36).substring(2)
+    // Verificar si se envía nueva contraseña y es diferente a la actual
+    if (req.body.password) {
+        if (req.body.password.length < 6 || req.body.password.length > 20) {
+            return res.status(400).json({ msg: "La contraseña debe tener entre 6 y 20 caracteres" });
+        }
 
-    // Encriptar el password
-    req.body.password = await administradorBDD.encrypPassword("Admin"+password+"Quito")
-    // Enviar el correo electrónico
-    sendMailToUser(req.body.email,"Admin"+password+"Quito")
-    // Actualizar el administrador
-    const administradorActualizado = await Administrador.findByIdAndUpdate(id,req.body,{new:true})
-    // Enviar el mensaje
+        const esIgual = await administradorBDD.matchPassword(req.body.password);
+        if (!esIgual) {
+            
+            const token = generarJWT(administradorBDD._id, "administrador");
+            const passwordTemporal = req.body.password;
+            administradorBDD.password = await administradorBDD.encrypPassword(passwordTemporal);
+            await administradorBDD.save();
+            sendMailToUser(req.body.email, passwordTemporal, token);
+            req.body.password = passwordTemporal;
+        }
+        if (esIgual) {
+            req.body.password = administradorBDD.password;
+            delete req.body.password; 
+        } else if (req.body.password === "") {
+            delete req.body.password; 
+
+        } else {
+            delete req.body.password; 
+        }
+    }
+
     try {
-        await administradorActualizado.save()
-        res.status(200).json({msg:"Administrador actualizado correctamente"})
+        const administradorActualizado = await Administrador.findByIdAndUpdate(id, req.body, { new: true });
+        res.status(200).json({ msg: "Administrador actualizado correctamente" });
+    } catch (error) {
+        res.status(500).json({ msg: "Lo sentimos, hubo un error al actualizar el Administrador" });
     }
-    catch (error) {
-        res.status(500).json({msg:"Lo sentimos, hubo un error al actualizar el Administrador"})
-    }
-}
+};
+
 
 
 const habilitarAdministrador = async (req,res)=>{
@@ -210,7 +253,32 @@ const deshabilitarAdministrador = async (req,res)=>{
 }
 
 
-// Exportar cada uno de los métodos
+import jwt from 'jsonwebtoken';
+
+const cambiarPassword = async (req, res) => {
+    const { token, password } = req.body;
+
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const admin = await Administrador.findById(decoded.id);
+        if (!admin) return res.status(404).json({ msg: 'Administrador no encontrado' });
+
+        if (password.length < 6 || password.length > 20) {
+            return res.status(400).json({ msg: "Contraseña debe tener entre 6 y 20 caracteres" });
+        }
+
+        admin.password = await admin.encrypPassword(password);
+        await admin.save();
+
+        res.status(200).json({ msg: "Contraseña actualizada correctamente" });
+
+    } catch (error) {
+        res.status(401).json({ msg: "Token inválido o expirado" });
+    }
+};
+
+
+
 export {
     login,
     perfil,
@@ -220,4 +288,5 @@ export {
     actualizarAdministrador,
     habilitarAdministrador,
     deshabilitarAdministrador,
+    cambiarPassword
 }

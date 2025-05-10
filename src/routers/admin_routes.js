@@ -11,6 +11,7 @@ import {
     actualizarAdministrador,
     deshabilitarAdministrador,
     habilitarAdministrador,
+    cambiarPassword,
 } from "../controllers/admin_controller.js";
 import verificarAutenticacion from '../middlewares/autenticacion.js';
 
@@ -42,6 +43,9 @@ router.put("/administrador/habilitar/:id", verificarAutenticacionSuperAdministra
 
 
 router.put("/administrador/deshabilitar/:id", verificarAutenticacionSuperAdministrador, deshabilitarAdministrador);
+
+router.put("/cambiar-password/:token", cambiarPassword)
+
 
 
 export default router
