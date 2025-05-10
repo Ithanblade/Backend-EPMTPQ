@@ -12,8 +12,8 @@ import {
 
 import verificarAutenticacion from "../middlewares/autenticacion.js";
 
-router.get("/rutas", listarRutas);
-router.get("/ruta/:id", detalleRuta);
+router.get("/rutas", verificarAutenticacion, listarRutas);
+router.get("/ruta/:id", verificarAutenticacion, detalleRuta);
 router.post("/ruta/registro", verificarAutenticacion, registrarRuta);
 router.put("/ruta/actualizar/:id", verificarAutenticacion, actualizarRuta);
 router.put("/ruta/habilitar/:id", verificarAutenticacion, habilitarRuta);

@@ -11,9 +11,9 @@ import verificarAutenticacion from "../middlewares/autenticacion.js";
 
 const router = express.Router();
 
-router.get('/paradas',  listarParadas);
+router.get('/paradas',  verificarAutenticacion, listarParadas);
 
-router.get('/parada/:id',  detalleParada);
+router.get('/parada/:id', verificarAutenticacion, detalleParada);
 
 router.post('/parada/registro',verificarAutenticacion, crearParada);
 

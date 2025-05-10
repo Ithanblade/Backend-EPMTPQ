@@ -5,9 +5,9 @@ import verificarAutenticacion from "../middlewares/autenticacion.js";
 const router = Router();
 
 
-router.get("/corredores",  listarCorredores);
+router.get("/corredores", verificarAutenticacion, listarCorredores);
 router.get("/corredor/:id", verificarAutenticacion, detalleCorredor);
-router.get("/corredor/paradas/:id", listarParadasDeCorredor);
+router.get("/corredor/paradas/:id", verificarAutenticacion, listarParadasDeCorredor);
 router.post("/corredor/registro", verificarAutenticacion,crearCorredor);
 router.put("/corredor/actualizar/:id", verificarAutenticacion,actualizarCorredor);
 router.put("/corredor/habilitar/:id", verificarAutenticacion,habilitarCorredor);
