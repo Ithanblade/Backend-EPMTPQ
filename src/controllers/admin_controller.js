@@ -1,6 +1,6 @@
 // Importar el modelo 
 import { sendMailToUser } from "../config/nodemailer.js"
-import generarJWT from "../helpers/crearJWT.js"
+import {generarJWT} from "../helpers/crearJWT.js"
 import Administrador from "../models/Admin.js"
 import mongoose from "mongoose";
 import jwt from 'jsonwebtoken'
@@ -252,8 +252,6 @@ const deshabilitarAdministrador = async (req,res)=>{
     res.status(200).json({msg:"Administrador deshabilitado correctamente"})
 }
 
-
-import jwt from 'jsonwebtoken';
 
 const cambiarPassword = async (req, res) => {
     const { token, password } = req.body;
