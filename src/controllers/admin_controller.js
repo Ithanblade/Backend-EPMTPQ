@@ -1,6 +1,6 @@
 // Importar el modelo 
 import { sendMailToUser } from "../config/nodemailer.js"
-import {generarJWT} from "../helpers/crearJWT.js"
+import {generarJWT,generarTokenTemporal} from "../helpers/crearJWT.js"
 import Administrador from "../models/Admin.js"
 import mongoose from "mongoose";
 import jwt from 'jsonwebtoken'
