@@ -12,8 +12,6 @@ import routerParadas from './routers/parada_routes.js'
 
 import routerImg from './routers/img_routes.js'
 
-
-
 // Inicializaciones
 const app = express()
 dotenv.config()
