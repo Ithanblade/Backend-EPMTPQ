@@ -44,7 +44,8 @@ router.put("/administrador/habilitar/:id", verificarAutenticacionSuperAdministra
 
 router.put("/administrador/deshabilitar/:id", verificarAutenticacionSuperAdministrador, deshabilitarAdministrador);
 
-router.put("/cambiar-password/:token", cambiarPassword)
+router.put("/cambiar-password", cambiarPassword)
+
 
 
 
