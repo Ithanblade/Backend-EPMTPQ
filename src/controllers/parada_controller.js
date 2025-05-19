@@ -3,7 +3,6 @@ import mongoose from 'mongoose';
 import Ruta from '../models/Ruta.js';
 import Corredor from '../models/Corredor.js';
 
-// Obtener todas las paradas
 const listarParadas = async (req, res) => {
   try {
     const paradas = await Parada.find();
@@ -15,7 +14,6 @@ const listarParadas = async (req, res) => {
   }
 };
 
-// Obtener el detalle de una parada
 const detalleParada = async (req, res) => {
   const { id } = req.params;
 
@@ -24,7 +22,7 @@ const detalleParada = async (req, res) => {
   }
 
   try {
-    const parada = await Parada.findById(id).populate('rutas', 'nombre').populate('corredor', 'nombre_corredor');
+    const parada = await Parada.findById(id).populate('rutas', 'nombre')
     if (!parada) {
       return res.status(404).json({ msg: `La parada con ID ${id} no fue encontrada.` });
     }
@@ -34,91 +32,177 @@ const detalleParada = async (req, res) => {
   }
 };
 
-// Método para crear el tratamiento
 const crearParada = async (req, res) => {
-  const { corredor, nombre, ...paradaData } = req.body;
+  const { nombre, descripcion, ubicacion_geografica, direccion_referencia, accesibilidad, servicios_disponibles, foto_url, estado_actual, rutas, } = req.body;
 
-  if (Object.values(req.body).includes('')) return res.status(400).json({ msg: "Por favor, complete todos los campos." });
+  if (Object.values(req.body).includes('') || !ubicacion_geografica?.latitud || !ubicacion_geografica?.longitud) {
+    return res.status(400).json({ msg: "Todos los campos son obligatorios." });
+  }
 
-  // Validar si el ID del corredor es válido
-  if (!mongoose.Types.ObjectId.isValid(corredor)) {
-    return res.status(400).json({ msg: `Lo sentimos, debe ser un ID válido.` });
+  if (typeof accesibilidad !== 'boolean') {
+    return res.status(400).json({ msg: "El campo 'accesibilidad' debe ser true o false." });
+  }
+
+  if (typeof estado_actual !== 'boolean') {
+    return res.status(400).json({ msg: "El campo 'estado_actual' debe ser true o false." });
+  }
+
+  if (nombre.length < 3 || nombre.length > 50) {
+    return res.status(400).json({ msg: "El nombre debe tener entre 3 y 50 caracteres." });
+  }
+
+  if (descripcion.length < 5 || descripcion.length > 200) {
+    return res.status(400).json({ msg: "La descripción debe tener entre 5 y 200 caracteres." });
+  }
+
+  if (direccion_referencia.length < 5 || direccion_referencia.length > 100) {
+    return res.status(400).json({ msg: "La dirección y referencia debe tener entre 5 y 100 caracteres." });
+  }
+
+  if (!Array.isArray(servicios_disponibles)) {
+    return res.status(400).json({ msg: "El campo 'servicios_disponibles' debe ser un arreglo." });
+  }
+
+  const serviciosValidos = ["boletería", "baños", "wifi", "vigilancia", "restaurantes"];
+  const serviciosInvalidos = servicios_disponibles.filter(s => !serviciosValidos.includes(s));
+
+  if (serviciosInvalidos.length > 0) {
+    return res.status(400).json({ msg: `Servicios no válidos: ${serviciosInvalidos.join(", ")}` });
+  }
+
+  if (!Array.isArray(rutas) || rutas.length === 0) {
+    return res.status(400).json({ msg: "Debes proporcionar al menos una ruta." });
+  }
+
+  for (const idRuta of rutas) {
+    if (!mongoose.Types.ObjectId.isValid(idRuta)) {
+      return res.status(400).json({ msg: `ID de ruta inválido: ${idRuta}` });
+    }
+
+    const existeRuta = await Ruta.findById(idRuta);
+    if (!existeRuta) {
+      return res.status(404).json({ msg: `No se encontró la ruta con ID ${idRuta}.` });
+    }
   }
 
   try {
-    // Verificar si ya existe una parada con el mismo nombre
+    const nuevaParada = new Parada({
+      nombre,
+      descripcion,
+      ubicacion_geografica,
+      direccion_referencia,
+      accesibilidad,
+      servicios_disponibles,
+      foto_url,
+      estado_actual,
+      rutas
+    });
     const paradaExistente = await Parada.findOne({ nombre });
     if (paradaExistente) {
-      return res.status(400).json({ msg: `La parada ${nombre} ya existe.` });
+      return res.status(400).json({ msg: `La parada "${nombre}" ya existe. Use otro nombre.` });
     }
+    await nuevaParada.save();
 
-    // Buscar el corredor en la base de datos
-    const corredorExistente = await Corredor.findById(corredor);
-    if (!corredorExistente) {
-      return res.status(404).json({ msg: `No se encontró el corredor con ID ${corredor}.` });
-    }
-
-    // Crear la nueva parada con el ID y nombre del corredor
-    const nuevaParada = await Parada.create({
-      ...paradaData,
-      nombre,
-      corredor
-    });
-
-
-    // Agregar la nueva parada al array de paradas del corredor
-    corredorExistente.paradas.push({
-      _id: nuevaParada._id,
-      nombre: nuevaParada.nombre
-    });
-
-    // Guardar los cambios en el corredor
-    await corredorExistente.save();
-
-    res.status(201).json({ msg: `Registro exitoso de la parada ${nuevaParada.nombre}`, nuevaParada });
-
+    res.status(201).json({ msg: `Parada registrada exitosamente.`, });
   } catch (error) {
-    res.status(500).json({ msg: "Error al crear la parada", error: error.message });
+    console.error(error);
+    res.status(500).json({ msg: "Error al registrar la parada.", error: error.message });
   }
 };
 
 
 const actualizarParada = async (req, res) => {
   const { id } = req.params;
-  const { nombre, tipo, ubicacion, corredores } = req.body;
+  const { nombre, descripcion, ubicacion_geografica, direccion_referencia, accesibilidad, servicios_disponibles, foto_url, estado_actual, rutas, } = req.body;
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
-    return res.status(404).json({ msg: `La parada con ID ${id} no existe.` });
+    return res.status(400).json({ msg: "ID de parada inválido." });
+  }
+
+  if (
+    Object.values(req.body).includes('') || !ubicacion_geografica?.latitud || !ubicacion_geografica?.longitud) {
+    return res.status(400).json({ msg: "Todos los campos son obligatorios." });
+  }
+
+  if (typeof accesibilidad !== 'boolean') {
+    return res.status(400).json({ msg: "El campo 'accesibilidad' debe ser true o false." });
+  }
+
+  if (typeof estado_actual !== 'boolean') {
+    return res.status(400).json({ msg: "El campo 'estado_actual' debe ser true o false." });
+  }
+
+  if (nombre.length < 3 || nombre.length > 50) {
+    return res.status(400).json({ msg: "El nombre debe tener entre 3 y 50 caracteres." });
+  }
+
+  if (descripcion.length < 5 || descripcion.length > 200) {
+    return res.status(400).json({ msg: "La descripción debe tener entre 5 y 200 caracteres." });
+  }
+
+  if (direccion_referencia.length < 5 || direccion_referencia.length > 100) {
+    return res.status(400).json({ msg: "La dirección y referencia debe tener entre 5 y 100 caracteres." });
+  }
+
+  if (!Array.isArray(servicios_disponibles)) {
+    return res.status(400).json({ msg: "El campo 'servicios_disponibles' debe ser un arreglo." });
+  }
+
+  const serviciosValidos = ["boletería", "baños", "wifi", "vigilancia", "restaurantes"];
+  const serviciosInvalidos = servicios_disponibles.filter(s => !serviciosValidos.includes(s));
+
+  if (serviciosInvalidos.length > 0) {
+    return res.status(400).json({ msg: `Servicios no válidos: ${serviciosInvalidos.join(", ")}` });
+  }
+
+  if (!Array.isArray(rutas) || rutas.length === 0) {
+    return res.status(400).json({ msg: "Debes proporcionar al menos una ruta." });
+  }
+
+  for (const idRuta of rutas) {
+    if (!mongoose.Types.ObjectId.isValid(idRuta)) {
+      return res.status(400).json({ msg: `ID de ruta inválido: ${idRuta}` });
+    }
+
+    const existeRuta = await Ruta.findById(idRuta);
+    if (!existeRuta) {
+      return res.status(404).json({ msg: `No se encontró la ruta con ID ${idRuta}.` });
+    }
+  }
+
+  const paradaExistente = await Parada.findOne({ nombre });
+  if (paradaExistente && paradaExistente._id.toString() !== id) {
+    return res.status(400).json({ msg: `La parada "${nombre}" ya existe. Use otro nombre.` });
   }
 
   try {
-    const paradaActual = await Parada.findById(id);
-    if (!paradaActual) {
-      return res.status(404).json({ msg: `La parada con ID ${id} no fue encontrada.` });
-    }
-
-    if (nombre !== paradaActual.nombre) {
-      const paradaExistente = await Parada.findOne({ nombre });
-      if (paradaExistente) {
-        return res.status(400).json({ msg: `La parada "${nombre}" ya existe. Use otro nombre.` });
-      }
-    }
-
     const paradaActualizada = await Parada.findByIdAndUpdate(
       id,
-      { nombre, tipo, ubicacion, corredores },
-      { new: true }
+      {
+        nombre,
+        descripcion,
+        ubicacion_geografica,
+        direccion_referencia,
+        accesibilidad,
+        servicios_disponibles,
+        foto_url,
+        estado_actual,
+        rutas,
+      },
+      { new: true, runValidators: true }
     );
 
-    res.status(200).json({ msg: "Parada actualizada exitosamente.", paradaActualizada });
+    if (!paradaActualizada) {
+      return res.status(404).json({ msg: `No se encontró ninguna parada con el ID ${id}.` });
+    }
+
+    res.status(200).json({ msg: `Parada actualizada exitosamente.`,});
   } catch (error) {
-    res.status(500).json({ msg: "Error al actualizar la parada", error: error.message });
+    console.error(error);
+    res.status(500).json({ msg: "Error al actualizar la parada.", error: error.message });
   }
 };
 
-
-
-// Habilitar una parada
 const habilitarParada = async (req, res) => {
   const { id } = req.params;
 
@@ -132,38 +216,36 @@ const habilitarParada = async (req, res) => {
       return res.status(404).json({ msg: `La parada con ID ${id} no fue encontrada.` });
     }
 
-    if (parada.status) {
+    if (parada.estado_actual) {
       return res.status(400).json({ msg: `La parada con ID ${id} ya está habilitada.` });
     }
 
-    const paradaHabilitada = await Parada.findByIdAndUpdate(id, { status: true }, { new: true });
-    res.status(200).json({ msg: "Parada habilitada correctamente.", paradaHabilitada });
+    const paradaHabilitada = await Parada.findByIdAndUpdate(id, { estado_actual: true }, { new: true });
+    res.status(200).json({ msg: "Parada habilitada correctamente." });
 
   } catch (error) {
     res.status(500).json({ msg: "Error al habilitar la parada", error: error.message });
   }
 };
 
-// Deshabilitar una parada
 const deshabilitarParada = async (req, res) => {
   const { id } = req.params;
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
     return res.status(404).json({ msg: `La parada con ID ${id} no existe.` });
   }
-
-  try {
     const parada = await Parada.findById(id);
     if (!parada) {
       return res.status(404).json({ msg: `La parada con ID ${id} no fue encontrada.` });
     }
 
-    if (!parada.status) {
+    if (!parada.estado_actual) {
       return res.status(400).json({ msg: `La parada con ID ${id} ya está deshabilitada.` });
     }
+  try {
 
-    const paradaDeshabilitada = await Parada.findByIdAndUpdate(id, { status: false }, { new: true });
-    res.status(200).json({ msg: "Parada deshabilitada correctamente.", paradaDeshabilitada });
+    const paradaDeshabilitada = await Parada.findByIdAndUpdate(id, { estado_actual: false }, { new: true });
+    res.status(200).json({ msg: "Parada deshabilitada correctamente." });
 
   } catch (error) {
     res.status(500).json({ msg: "Error al deshabilitar la parada", error: error.message });

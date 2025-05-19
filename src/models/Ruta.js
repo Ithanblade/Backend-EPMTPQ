@@ -1,44 +1,48 @@
 import mongoose, { Schema, model } from 'mongoose';
 
 const rutaSchema = new Schema({
-    nombre: {
-        type: String,
-        required: true,
-        trim: true,
-    },
-    recorrido: {
-        type: String,
-        required: true,
-        trim: true,
-    },
-    horario: {
-        type: Object,
-        required: true,
-        trim: true,
-    },
-    sentido: {
-        type: String,
-        required: true,
-        trim: true,
-    },
-    estado: {
-        type: Boolean,
-        default: true,
-    },
-    paradas: [
-        {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Parada', 
-            required: true,
-        },
-    ],
-    corredor: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Corredor', 
-        required: true,
-    },
+  nombre: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  corredor: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Corredor',
+    required: true,
+  },
+  descripcion: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  sentido: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  frecuencia_paso: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  horario_operacion: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  color_ruta: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  estado_actual: {
+    type: Boolean,
+    required: true,
+  }
 }, {
-    timestamps: true,   
+  timestamps: true,
+  collection: 'rutas',
 });
 
 export default model('Ruta', rutaSchema);

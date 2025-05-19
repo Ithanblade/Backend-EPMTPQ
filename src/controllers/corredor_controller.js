@@ -1,7 +1,6 @@
 import Corredor from "../models/Corredor.js";
 import mongoose from "mongoose";
 
-// Listar todos los corredores
 const listarCorredores = async (req, res) => {
   try {
     const corredores = await Corredor.find();
@@ -12,7 +11,6 @@ const listarCorredores = async (req, res) => {
   }
 };
 
-// Obtener los detalles de un corredor específico
 const detalleCorredor = async (req, res) => {
   const { id } = req.params;
 
@@ -32,79 +30,163 @@ const detalleCorredor = async (req, res) => {
   }
 };
 
-// Listar todas las paradas de un corredor
-const listarParadasDeCorredor = async (req, res) => {
-  const { id } = req.params;
 
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    return res.status(404).json({ msg: `El corredor con ID ${id} no existe.` });
-  }
-
-  try {
-    const corredor = await Corredor.findById(id).populate("paradas", "nombre tipo ubicacion estado");
-
-    if (!corredor) {
-      return res.status(404).json({ msg: `El corredor con ID ${id} no fue encontrado.` });
-    }
-
-    res.status(200).json(corredor.paradas);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ msg: "Error al obtener las paradas del corredor", error: error.message });
-  }
-};
-
-// Crear un nuevo corredor
 const crearCorredor = async (req, res) => {
-  const { nombre_corredor } = req.body;
+  const { nombre,descripcion,color_identificativo,fecha_inauguracion,longitud_recorrido,horario_operacion,frecuencia_servicio,rango_tarifas,lugares_interes,tipo_vehiculos_utilizados,foto_url,estado_actual} = req.body;
 
+  if (Object.values(req.body).includes(""))
+    return res.status(404).json({ msg: "Lo sentimos, debes llenar todos los campos" });
+
+  if (!Array.isArray(lugares_interes) || lugares_interes.length === 0) {
+    return res.status(400).json({ msg: 'Debe registrar al menos un lugar de interés.' });
+  }
+
+  if (!Array.isArray(tipo_vehiculos_utilizados) || tipo_vehiculos_utilizados.length === 0) {
+    return res.status(400).json({ msg: 'Debe registrar al menos un tipo de vehículo utilizado.' });
+  }
+
+  if (descripcion.length < 5 || descripcion.length > 100) {
+    return res.status(400).json({ msg: 'La descripción debe tener entre 5 y 100 caracteres.' });
+  }
+
+  if (color_identificativo.length < 3 || color_identificativo.length > 50) {
+    return res.status(400).json({ msg: 'El color identificativo debe tener entre 3 y 50 caracteres.' });
+  }
+
+  if (longitud_recorrido.length < 5 || longitud_recorrido.length > 25) {
+    return res.status(400).json({ msg: 'La longitud del recorrido debe tener entre 5 y 25 caracteres.' });
+  }
+
+  if (horario_operacion.length < 5 || horario_operacion.length > 50) {
+    return res.status(400).json({ msg: 'El horario de operación debe tener entre 5 y 50 caracteres.' });
+  }
+
+  if (frecuencia_servicio.length < 5 || frecuencia_servicio.length > 50) {
+    return res.status(400).json({ msg: 'La frecuencia de servicio debe tener entre 5 y 50 caracteres.' });
+  }
+
+  if (rango_tarifas.length < 5 || rango_tarifas.length > 50) {
+    return res.status(400).json({ msg: 'El rango de tarifas debe tener entre 5 y 50 caracteres.' });
+  }
+  if (nombre.length < 5 || nombre.length > 25) {
+    return res.status(400).json({ msg: 'El nombre del corredor debe tener entre 5 y 100 caracteres.' });
+  }
+
+  const corredorExistente = await Corredor.findOne({ nombre });
+  if (corredorExistente) {
+    return res.status(400).json({ msg: `El corredor ${nombre} ya existe.` });
+  }
   
-  if (Object.values(req.body).includes("")) return res.status(404).json({msg:"Lo sentimos, debes llenar todos los campos"})
-    
 
   try {
-    
-    const corredorExistente = await Corredor.findOne({ nombre_corredor: nombre_corredor.trim() });
+    const nuevoCorredor = new Corredor({
+      nombre: nombre.trim(),
+      descripcion: descripcion.trim(),
+      color_identificativo: color_identificativo.trim(),
+      fecha_inauguracion,
+      longitud_recorrido,
+      horario_operacion,
+      frecuencia_servicio,
+      rango_tarifas,
+      lugares_interes,
+      tipo_vehiculos_utilizados,
+      foto_url,
+      estado_actual
+    });
 
-    if (corredorExistente) {
-      return res.status(400).json({ msg: `El corredor con el nombre "${nombre_corredor}" ya existe.` });
-    }
-
-    
-    const nuevoCorredor = new Corredor(req.body);
     await nuevoCorredor.save();
 
-    res.status(201).json({ msg: `El corredor ${nombre_corredor} ha sido creado con exito.`, nuevoCorredor });
+    res.status(201).json({
+      msg: 'Corredor registrado exitosamente.',
+      corredor: nuevoCorredor
+    });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ msg: "Error al crear el corredor", error: error.message });
+    res.status(500).json({ msg: 'Error al registrar el corredor.', error: error.message });
   }
 };
 
 
-// Actualizar un corredor existente
 const actualizarCorredor = async (req, res) => {
   const { id } = req.params;
+  const {nombre,descripcion,color_identificativo,fecha_inauguracion,longitud_recorrido,horario_operacion,frecuencia_servicio,rango_tarifas,lugares_interes,tipo_vehiculos_utilizados,foto_url,estado_actual} = req.body;
 
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    return res.status(404).json({ msg: `El corredor con ID ${id} no existe.` });
+  if (Object.values(req.body).includes(""))
+    return res.status(400).json({ msg: "Lo sentimos, debes llenar todos los campos." });
+
+  if (!Array.isArray(lugares_interes) || lugares_interes.length === 0) {
+    return res.status(400).json({ msg: 'Debe registrar al menos un lugar de interés.' });
   }
 
-  if (Object.values(req.body).some((campo) => !campo)) {
-    return res.status(400).json({ msg: "Todos los campos son obligatorios." });
+  if (!Array.isArray(tipo_vehiculos_utilizados) || tipo_vehiculos_utilizados.length === 0) {
+    return res.status(400).json({ msg: 'Debe registrar al menos un tipo de vehículo utilizado.' });
+  }
+
+  if (descripcion.length < 5 || descripcion.length > 100) {
+    return res.status(400).json({ msg: 'La descripción debe tener entre 5 y 100 caracteres.' });
+  }
+
+  if (color_identificativo.length < 3 || color_identificativo.length > 50) {
+    return res.status(400).json({ msg: 'El color identificativo debe tener entre 3 y 50 caracteres.' });
+  }
+
+  if (longitud_recorrido.length < 5 || longitud_recorrido.length > 25) {
+    return res.status(400).json({ msg: 'La longitud del recorrido debe tener entre 5 y 25 caracteres.' });
+  }
+
+  if (horario_operacion.length < 5 || horario_operacion.length > 50) {
+    return res.status(400).json({ msg: 'El horario de operación debe tener entre 5 y 50 caracteres.' });
+  }
+
+  if (frecuencia_servicio.length < 5 || frecuencia_servicio.length > 50) {
+    return res.status(400).json({ msg: 'La frecuencia de servicio debe tener entre 5 y 50 caracteres.' });
+  }
+
+  if (rango_tarifas.length < 5 || rango_tarifas.length > 50) {
+    return res.status(400).json({ msg: 'El rango de tarifas debe tener entre 5 y 50 caracteres.' });
+  }
+
+  if (nombre.length < 5 || nombre.length > 25) {
+    return res.status(400).json({ msg: 'El nombre del corredor debe tener entre 5 y 100 caracteres.' });
+  }
+
+  const corredorExistente = await Corredor.findOne({ nombre });
+  if (corredorExistente && corredorExistente._id.toString() !== id) {
+    return res.status(400).json({ msg: `El corredor ${nombre} ya existe.` });
   }
 
   try {
-    const corredorActualizado = await Corredor.findByIdAndUpdate(id, req.body, { new: true });
-    if (!corredorActualizado) {
-      return res.status(404).json({ msg: `El corredor con ID ${id} no fue encontrado.` });
+    const corredor = await Corredor.findById(id);
+
+    if (!corredor) {
+      return res.status(404).json({ msg: 'Corredor no encontrado.' });
     }
-    res.status(200).json({ msg: "Corredor actualizado exitosamente.", corredorActualizado });
+
+    const corredorActualizado = await Corredor.findByIdAndUpdate(
+      id,
+      {
+        descripcion: descripcion.trim(),
+        color_identificativo: color_identificativo.trim(),
+        fecha_inauguracion,
+        longitud_recorrido,
+        horario_operacion,
+        frecuencia_servicio,
+        rango_tarifas,
+        lugares_interes,
+        tipo_vehiculos_utilizados,
+        foto_url,
+        estado_actual
+      },
+      { new: true }
+    );
+
+    res.status(200).json({ msg: 'Corredor actualizado exitosamente.' });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ msg: "Error al actualizar el corredor", error: error.message });
+    res.status(500).json({ msg: 'Error al actualizar el corredor.', error: error.message });
   }
 };
+
 
 const habilitarCorredor = async (req, res) => {
   const { id } = req.params;
@@ -118,9 +200,12 @@ const habilitarCorredor = async (req, res) => {
     if (!corredor) {
       return res.status(404).json({ msg: `El corredor con ID ${id} no fue encontrado.` });
     }
+    if (corredor.estado_actual) {
+      return res.status(400).json({ msg: `El corredor con ID ${id} ya está habilitado.` });
+    }
 
-    const corredorHabilitado = await Corredor.findByIdAndUpdate(id, { status: true }, { new: true });
-    res.status(200).json({ msg: "Corredor habilitado exitosamente.", corredorHabilitado });
+    const corredorHabilitado = await Corredor.findByIdAndUpdate(id, { estado_actual: true }, { new: true });
+    res.status(200).json({ msg: "Corredor habilitado exitosamente." });
   } catch (error) {
     console.error(error);
     res.status(500).json({ msg: "Error al habilitar el corredor", error: error.message });
@@ -139,9 +224,12 @@ const deshabilitarCorredor = async (req, res) => {
     if (!corredor) {
       return res.status(404).json({ msg: `El corredor con ID ${id} no fue encontrado.` });
     }
+    if (!corredor.estado_actual) {
+      return res.status(400).json({ msg: `El corredor con ID ${id} ya está deshabilitado.` });
+    }
 
-    const corredorDeshabilitado = await Corredor.findByIdAndUpdate(id, { status: false }, { new: true });
-    res.status(200).json({ msg: "Corredor deshabilitado exitosamente.", corredorDeshabilitado });
+    const corredorDeshabilitado = await Corredor.findByIdAndUpdate(id, { estado_actual: false }, { new: true });
+    res.status(200).json({ msg: "Corredor deshabilitado exitosamente." });
   } catch (error) {
     console.error(error);
     res.status(500).json({ msg: "Error al deshabilitar el corredor", error: error.message });
@@ -152,7 +240,6 @@ const deshabilitarCorredor = async (req, res) => {
 export {
   listarCorredores,
   detalleCorredor,
-  listarParadasDeCorredor,
   crearCorredor,
   actualizarCorredor,
   habilitarCorredor,

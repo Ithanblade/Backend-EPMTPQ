@@ -2,87 +2,63 @@ import mongoose, { Schema, model } from 'mongoose';
 
 const corredorSchema = new Schema(
   {
-    nombre_corredor: {
+    nombre: {
       type: String,
       required: true,
       trim: true,
     },
-    inaguracion_corredor: {
+    descripcion: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    color_identificativo: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    fecha_inauguracion: {
       type: Date,
       required: true,
     },
-    integracion_alimentador: {
+    longitud_recorrido: {
       type: String,
       required: true,
     },
-    integracion_corredor: {
+    horario_operacion: {
       type: String,
       required: true,
     },
-    longitud_corredor: {
+    frecuencia_servicio: {
       type: String,
       required: true,
     },
-    tipo_servicio: {
+    rango_tarifas: {
       type: String,
       required: true,
     },
-    vehiculos: {
-      trolebus: {
-        type: Number,
-        required: true,
-      },
-      biarticulados: {
-        type: Number,
-        required: true,
-      },
-      mb0500: {
-        type: Number,
-        required: true,
-      },
+    lugares_interes: {
+      type: [String],
+      required: true,
     },
-    demanda_diaria: {
+    tipo_vehiculos_utilizados: {
+      type: [String],
+      required: true,
+    },
+    foto_url: {
       type: String,
       required: true,
     },
-    tarifa: {
-      normal: {
-        type: Number,
-        required: true,
-      },
-      reducida: {
-        type: Number,
-        required: true,
-      },
-      preferencial: {
-        type: Number,
-        required: true,
-      },
-    },
-    historia: {
-      type: String,
-      required: true,
-    },
-    paradas: [
-      {
-        _id: {
-          type: Schema.Types.ObjectId,
-          ref: 'Parada',
-        },
-        nombre: {
-          type: String,
-        }
-      }
-    ],
-    status: {
+    estado_actual: {
       type: Boolean,
-      default: true,
-    }
+      required: true,
+    },
   },
   {
     timestamps: true,
-  },
-  { collection: 'corredores' }
+    collection: 'corredores',
+  }
 );
+
 
 export default model('Corredor', corredorSchema);
