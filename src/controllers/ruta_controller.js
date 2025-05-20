@@ -32,14 +32,10 @@ const detalleRuta = async (req, res) => {
 
 
 const registrarRuta = async (req, res) => {
-    const { nombre, corredor, descripcion, sentido, frecuencia_paso, horario_operacion, color_ruta, estado_actual } = req.body;
+    const { nombre, corredor, descripcion, sentido, frecuencia_paso, horario_operacion, color_ruta } = req.body;
 
     if (Object.values(req.body).includes('')) {
         return res.status(400).json({ msg: "Todos los campos son obligatorios." });
-    }
-
-    if (typeof estado_actual !== 'boolean') {
-        return res.status(400).json({ msg: "El campo 'estado_actual' debe ser true o false" });
     }
 
     if (!mongoose.Types.ObjectId.isValid(corredor)) {
@@ -85,7 +81,7 @@ const registrarRuta = async (req, res) => {
             frecuencia_paso,
             horario_operacion,
             color_ruta,
-            estado_actual
+            estado_actual: true
         });
 
         await nuevaRuta.save();
@@ -102,16 +98,7 @@ const registrarRuta = async (req, res) => {
 
 const actualizarRuta = async (req, res) => {
   const { id } = req.params;
-  const {
-    nombre,
-    corredor,
-    descripcion,
-    sentido,
-    frecuencia_paso,
-    horario_operacion,
-    color_ruta,
-    estado_actual
-  } = req.body;
+  const {nombre,corredor,descripcion,sentido,frecuencia_paso,horario_operacion,color_ruta} = req.body;
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
     return res.status(400).json({ msg: "ID de ruta inválido." });
@@ -121,9 +108,6 @@ const actualizarRuta = async (req, res) => {
     return res.status(400).json({ msg: "Todos los campos son obligatorios." });
   }
 
-  if (typeof estado_actual !== 'boolean') {
-    return res.status(400).json({ msg: "El campo 'estado_actual' debe ser true o false" });
-  }
 
   if (!mongoose.Types.ObjectId.isValid(corredor)) {
     return res.status(400).json({ msg: 'ID de corredor inválido.' });
@@ -175,7 +159,6 @@ const actualizarRuta = async (req, res) => {
         frecuencia_paso: frecuencia_paso.trim(),
         horario_operacion: horario_operacion.trim(),
         color_ruta: color_ruta.trim(),
-        estado_actual
       },
       { new: true, runValidators: true }
     );

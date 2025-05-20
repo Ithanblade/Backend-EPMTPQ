@@ -38,7 +38,7 @@ const rutaSchema = new Schema({
   },
   estado_actual: {
     type: Boolean,
-    required: true,
+    default: true,
   }
 }, {
   timestamps: true,

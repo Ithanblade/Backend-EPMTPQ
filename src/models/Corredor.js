@@ -51,7 +51,7 @@ const corredorSchema = new Schema(
     },
     estado_actual: {
       type: Boolean,
-      required: true,
+      default: true,
     },
   },
   {

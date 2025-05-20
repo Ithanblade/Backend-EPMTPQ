@@ -32,7 +32,7 @@ const detalleCorredor = async (req, res) => {
 
 
 const crearCorredor = async (req, res) => {
-  const { nombre,descripcion,color_identificativo,fecha_inauguracion,longitud_recorrido,horario_operacion,frecuencia_servicio,rango_tarifas,lugares_interes,tipo_vehiculos_utilizados,foto_url,estado_actual} = req.body;
+  const { nombre,descripcion,color_identificativo,fecha_inauguracion,longitud_recorrido,horario_operacion,frecuencia_servicio,rango_tarifas,lugares_interes,tipo_vehiculos_utilizados,foto_url} = req.body;
 
   if (Object.values(req.body).includes(""))
     return res.status(404).json({ msg: "Lo sentimos, debes llenar todos los campos" });
@@ -91,7 +91,7 @@ const crearCorredor = async (req, res) => {
       lugares_interes,
       tipo_vehiculos_utilizados,
       foto_url,
-      estado_actual
+      estado_actual: true
     });
 
     await nuevoCorredor.save();
@@ -109,7 +109,7 @@ const crearCorredor = async (req, res) => {
 
 const actualizarCorredor = async (req, res) => {
   const { id } = req.params;
-  const {nombre,descripcion,color_identificativo,fecha_inauguracion,longitud_recorrido,horario_operacion,frecuencia_servicio,rango_tarifas,lugares_interes,tipo_vehiculos_utilizados,foto_url,estado_actual} = req.body;
+  const {nombre,descripcion,color_identificativo,fecha_inauguracion,longitud_recorrido,horario_operacion,frecuencia_servicio,rango_tarifas,lugares_interes,tipo_vehiculos_utilizados,foto_url} = req.body;
 
   if (Object.values(req.body).includes(""))
     return res.status(400).json({ msg: "Lo sentimos, debes llenar todos los campos." });
@@ -175,7 +175,6 @@ const actualizarCorredor = async (req, res) => {
         lugares_interes,
         tipo_vehiculos_utilizados,
         foto_url,
-        estado_actual
       },
       { new: true }
     );

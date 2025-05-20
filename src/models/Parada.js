@@ -44,6 +44,7 @@ const paradaSchema = new Schema(
     estado_actual: {
       type: Boolean,
       default: true,
+      
     },
     rutas: [
       {

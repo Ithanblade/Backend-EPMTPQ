@@ -33,7 +33,7 @@ const detalleParada = async (req, res) => {
 };
 
 const crearParada = async (req, res) => {
-  const { nombre, descripcion, ubicacion_geografica, direccion_referencia, accesibilidad, servicios_disponibles, foto_url, estado_actual, rutas, } = req.body;
+  const { nombre, descripcion, ubicacion_geografica, direccion_referencia, accesibilidad, servicios_disponibles, foto_url, rutas, } = req.body;
 
   if (Object.values(req.body).includes('') || !ubicacion_geografica?.latitud || !ubicacion_geografica?.longitud) {
     return res.status(400).json({ msg: "Todos los campos son obligatorios." });
@@ -41,10 +41,6 @@ const crearParada = async (req, res) => {
 
   if (typeof accesibilidad !== 'boolean') {
     return res.status(400).json({ msg: "El campo 'accesibilidad' debe ser true o false." });
-  }
-
-  if (typeof estado_actual !== 'boolean') {
-    return res.status(400).json({ msg: "El campo 'estado_actual' debe ser true o false." });
   }
 
   if (nombre.length < 3 || nombre.length > 50) {
@@ -94,7 +90,7 @@ const crearParada = async (req, res) => {
       accesibilidad,
       servicios_disponibles,
       foto_url,
-      estado_actual,
+      estado_actual: true,
       rutas
     });
     const paradaExistente = await Parada.findOne({ nombre });
@@ -113,7 +109,7 @@ const crearParada = async (req, res) => {
 
 const actualizarParada = async (req, res) => {
   const { id } = req.params;
-  const { nombre, descripcion, ubicacion_geografica, direccion_referencia, accesibilidad, servicios_disponibles, foto_url, estado_actual, rutas, } = req.body;
+  const { nombre, descripcion, ubicacion_geografica, direccion_referencia, accesibilidad, servicios_disponibles, foto_url, rutas, } = req.body;
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
     return res.status(400).json({ msg: "ID de parada inválido." });
@@ -126,10 +122,6 @@ const actualizarParada = async (req, res) => {
 
   if (typeof accesibilidad !== 'boolean') {
     return res.status(400).json({ msg: "El campo 'accesibilidad' debe ser true o false." });
-  }
-
-  if (typeof estado_actual !== 'boolean') {
-    return res.status(400).json({ msg: "El campo 'estado_actual' debe ser true o false." });
   }
 
   if (nombre.length < 3 || nombre.length > 50) {
@@ -186,7 +178,6 @@ const actualizarParada = async (req, res) => {
         accesibilidad,
         servicios_disponibles,
         foto_url,
-        estado_actual,
         rutas,
       },
       { new: true, runValidators: true }
