@@ -42,8 +42,8 @@ const registrarRuta = async (req, res) => {
         return res.status(400).json({ msg: 'ID de corredor inválido.' });
     }
 
-    if (nombre.length < 5 || nombre.length > 50) {
-        return res.status(400).json({ msg: 'El nombre de la ruta debe tener entre 5 y 50 caracteres.' });
+    if (nombre.length < 1 || nombre.length > 30) {
+        return res.status(400).json({ msg: 'El nombre de la ruta debe tener entre 1 y 30 caracteres.' });
     }
     if (descripcion.length < 5 || descripcion.length > 100) {
         return res.status(400).json({ msg: 'La descripción debe tener entre 5 y 100 caracteres.' });
@@ -113,8 +113,8 @@ const actualizarRuta = async (req, res) => {
     return res.status(400).json({ msg: 'ID de corredor inválido.' });
   }
 
-  if (nombre.length < 5 || nombre.length > 50) {
-    return res.status(400).json({ msg: 'El nombre de la ruta debe tener entre 5 y 50 caracteres.' });
+  if (nombre.length < 1 || nombre.length > 30) {
+    return res.status(400).json({ msg: 'El nombre de la ruta debe tener entre 1 y 30 caracteres.' });
   }
   if (descripcion.length < 5 || descripcion.length > 100) {
     return res.status(400).json({ msg: 'La descripción debe tener entre 5 y 100 caracteres.' });
