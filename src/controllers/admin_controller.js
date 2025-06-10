@@ -174,7 +174,7 @@ const actualizarAdministrador = async (req, res) => {
         return res.status(400).json({ msg: "Lo sentimos, el teléfono debe tener entre 10 y 15 caracteres" });
     }
 
-    if (req.body.direccion.length < 10) {
+    if (req.body.direccion.length < 3) {
         return res.status(400).json({ msg: "Lo sentimos, la dirección debe tener al menos 10 caracteres" });
     }
 
@@ -189,33 +189,6 @@ const actualizarAdministrador = async (req, res) => {
     const validacionEmail = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/;
     if (!validacionEmail.test(req.body.email)) {
         return res.status(400).json({ msg: "Lo sentimos, el formato de email no es válido" });
-    }
-
-    // Verificar si se envía nueva contraseña y es diferente a la actual
-    if (req.body.password) {
-        if (req.body.password.length < 6 || req.body.password.length > 20) {
-            return res.status(400).json({ msg: "La contraseña debe tener entre 6 y 20 caracteres" });
-        }
-
-        const esIgual = await administradorBDD.matchPassword(req.body.password);
-        if (!esIgual) {
-            
-            const token = generarJWT(administradorBDD._id, "administrador");
-            const passwordTemporal = req.body.password;
-            administradorBDD.password = await administradorBDD.encrypPassword(passwordTemporal);
-            await administradorBDD.save();
-            sendMailToUser(req.body.email, passwordTemporal, token);
-            req.body.password = passwordTemporal;
-        }
-        if (esIgual) {
-            req.body.password = administradorBDD.password;
-            delete req.body.password; 
-        } else if (req.body.password === "") {
-            delete req.body.password; 
-
-        } else {
-            delete req.body.password; 
-        }
     }
 
     try {
