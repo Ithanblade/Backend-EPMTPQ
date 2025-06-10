@@ -15,7 +15,7 @@ let transporter = nodemailer.createTransport({
 
 
 const sendMailToUser = (userMail, password, token) => {
-    const link = `${process.env.URL_FRONTEND}cambiar-password?token=${token}`;
+    const link = `${process.env.URL_FRONTEND}/cambiar-password?token=${token}`;
 
     const mailOptions = {
         from: process.env.USER_MAILTRAP,
