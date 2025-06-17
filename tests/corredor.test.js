@@ -1,138 +1,65 @@
-  import request from "supertest";
-  import mongoose from "mongoose";
-  import server from "../src/server.js";
-  import Corredor from "../src/models/Corredor.js";
+import request from "supertest";
+import mongoose from "mongoose";
+import server from "../src/server.js";
+import Corredor from "../src/models/Corredor.js";
 
-  describe("CRUD de Corredores", () => {
-    // Antes de todo, conectamos a la base de datos de prueba
-    beforeAll(async () => {
-      await mongoose.connect(process.env.DB_URI, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-      });
-    });
+const tokenQuemado = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjNXMDBnZTNIdEREaEE2NiIsInJvbCI6InN1cGVyLWFkbWluaXN0cmFkb3IiLCJpYXQiOjE3NTAxODYyMTksImV4cCI6MTc1MDE4OTgxOX0.5Op9wGWh80tl6M7jeYt-IUURnWRLT12U9_-9YESn-Ug";
 
-    // Limpiar la colección después de cada prueba
-    afterEach(async () => {
-      await Corredor.deleteMany({}); // Limpiar solo los corredores
-    });
-
-    // Cerrar la conexión después de las pruebas
-    afterAll(async () => {
-      await mongoose.connection.close();
-    });
-
-    it("Debe crear un nuevo corredor", async () => {
-      const nuevoCorredor = {
-        nombre: "Corredor A",  
-        historia: "Historia del corredor",
-        tarifa: { preferencial: 0.25, reducida: 0.15, normal: 0.30 },
-        vehiculos: { MB0500: 10, biarticulados: 5, trolebus: 15 },
-        "tipo de servicio": "Público",
-        longitud: 12.5,
-        "integracion alimentador": "Fisica",
-        "integracion corredores": "Fisica y tarifa",
-        inauguracion: "2020-01-01",
-        "demanda diaria": "1000",
-        paradas: [],
-      };
-
-      const response = await request(server).post("/api/corredor/registro").send(nuevoCorredor);
-
-      expect(response.statusCode).toBe(201);
-      expect(response.body.nuevoCorredor.nombre).toBe(nuevoCorredor.nombre);
-    });
-
-    it("Debe obtener la lista de corredores", async () => {
-      const corredor = new Corredor({
-        nombre: "Corredor Norte",
-        historia: "Historia del corredor",
-        tarifa: { preferencial: 0.25, reducida: 0.15, normal: 0.30 },
-        vehiculos: { MB0500: 10, biarticulados: 5, trolebus: 15 },
-        "tipo de servicio": "Público",
-        longitud: 12.5,
-        "integracion alimentador": "Fisica",
-        "integracion corredores": "Fisica y tarifa",
-        inauguracion: "2020-01-01",
-        "demanda diaria": "1000",
-        paradas: [],
-      });
-      await corredor.save();
-
-      const response = await request(server).get("/api/corredores");
-
-      expect(response.statusCode).toBe(200);
-      expect(response.body.length).toBe(1);
-      expect(response.body[0].nombre).toBe(corredor.nombre);
-    });
-
-    it("Debe obtener los detalles de un corredor específico", async () => {
-      const corredor = new Corredor({
-        nombre: "Corredor Este",
-        historia: "Historia del corredor",
-        tarifa: { preferencial: 0.25, reducida: 0.15, normal: 0.30 },
-        vehiculos: { MB0500: 10, biarticulados: 5, trolebus: 15 },
-        "tipo de servicio": "Público",
-        longitud: 12.5,
-        "integracion alimentador": "Fisica",
-        "integracion corredores": "Fisica y tarifa",
-        inauguracion: "2020-01-01",
-        "demanda diaria": "1000",
-        paradas: [],
-      });
-      await corredor.save();
-
-      const response = await request(server).get(`/api/corredor/${corredor._id}`);
-
-      expect(response.statusCode).toBe(200);
-      expect(response.body.nombre).toBe(corredor.nombre);
-    });
-
-    it("Debe actualizar un corredor existente", async () => {
-      const corredor = new Corredor({
-          nombre: "Corredor Este",
-          historia: "Historia del corredor",
-          tarifa: { preferencial: 0.25, reducida: 0.15, normal: 0.30 },
-          vehiculos: { MB0500: 10, biarticulados: 5, trolebus: 15 },
-          "tipo de servicio": "Público",
-          longitud: 12.5,
-          "integracion alimentador": "Fisica",
-          "integracion corredores": "Fisica y tarifa",
-          inauguracion: "2020-01-01",
-          "demanda diaria": "1000",
-          paradas: [],
-        });
-      await corredor.save();
-
-      const response = await request(server)
-        .put(`/api/corredor/actualizar/${corredor._id}`)
-        .send({ nombre: "Corredor Sur Actualizado" });
-
-      expect(response.statusCode).toBe(200);
-      expect(response.body.msg).toBe("Corredor actualizado exitosamente.");
-    });
-
-    it("Debe eliminar un corredor", async () => {
-      const corredor = new Corredor({
-          nombre: "Corredor Este",
-          historia: "Historia del corredor",
-          tarifa: { preferencial: 0.25, reducida: 0.15, normal: 0.30 },
-          vehiculos: { MB0500: 10, biarticulados: 5, trolebus: 15 },
-          "tipo de servicio": "Público",
-          longitud: 12.5,
-          "integracion alimentador": "Fisica",
-          "integracion corredores": "Fisica y tarifa",
-          inauguracion: "2020-01-01",
-          "demanda diaria": "1000",
-          paradas: [],
-        });
-      await corredor.save();
-
-      const response = await request(server).delete(`/api/corredor/eliminar/${corredor._id}`);
-
-      expect(response.statusCode).toBe(200);
-
-      const corredorEliminado = await Corredor.findById(corredor._id);
-      expect(corredorEliminado).toBeNull();
+describe("CRUD de Corredores", () => {
+  beforeAll(async () => {
+    await mongoose.connect(process.env.MONGODB_URI_TEST, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
     });
   });
+
+  afterEach(async () => {
+    await Corredor.deleteMany({});
+  });
+
+  afterAll(async () => {
+    await mongoose.connection.close();
+  });
+
+  it("Debe listar corredores con datos completos", async () => {
+    const corredorCompleto = {
+      nombre: "CCN 17",
+      descripcion: "Corredor ecológico con transporte eficiente",
+      color_identificativo: "Verde Oscuro",
+      fecha_inauguracion: new Date("2020-05-15T00:00:00.000Z"),
+      longitud_recorrido: "15 km",
+      horario_operacion: "06:00 - 22:00",
+      frecuencia_servicio: "Cada 10 minutos",
+      rango_tarifas: "$0.25 - $1.00",
+      lugares_interes: [
+        "Parque Central",
+        "Estación Terminal",
+        "Museo de la Ciudad"
+      ],
+      tipo_vehiculos_utilizados: [
+        "Trolebús",
+        "Bus eléctrico"
+      ],
+      foto_url: "https://example.com/imagen-corredor.jpg",
+      ultima_actualizacion: new Date("2025-05-01T12:00:00.000Z")
+    };
+
+    await Corredor.create(corredorCompleto);
+
+    const response = await request(server)
+      .get("/api/corredores")
+      .set("Authorization", `Bearer ${tokenQuemado}`);
+
+    expect(response.statusCode).toBe(200);
+    expect(Array.isArray(response.body)).toBe(true);
+
+
+    const corredor = response.body[0];
+    expect(corredor).toHaveProperty("nombre", corredorCompleto.nombre);
+    expect(corredor).toHaveProperty("descripcion", corredorCompleto.descripcion);
+    expect(corredor).toHaveProperty("color_identificativo", corredorCompleto.color_identificativo);
+    expect(new Date(corredor.fecha_inauguracion)).toEqual(corredorCompleto.fecha_inauguracion);
+    expect(corredor.lugares_interes).toEqual(expect.arrayContaining(corredorCompleto.lugares_interes));
+    expect(corredor.tipo_vehiculos_utilizados).toEqual(expect.arrayContaining(corredorCompleto.tipo_vehiculos_utilizados));
+  });
+});

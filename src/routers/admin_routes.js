@@ -16,7 +16,6 @@ import {
 import verificarAutenticacion from '../middlewares/autenticacion.js';
 
 
-import { validacionAdministrador } from '../middlewares/validacionAdministrador.js';
 import verificarAutenticacionSuperAdministrador from '../middlewares/autenticaion_superAdministrador.js';
 
 

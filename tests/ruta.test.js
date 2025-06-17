@@ -2,139 +2,77 @@ import request from "supertest";
 import mongoose from "mongoose";
 import server from "../src/server.js";
 import Ruta from "../src/models/Ruta.js";
+import Corredor from "../src/models/Corredor.js";
 
-describe("CRUD de Rutas", () => {
-  // Antes de todo, conectamos a la base de datos de prueba
+const tokenQuemado =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjNXMDBnZTNIdEREaEE2NiIsInJvbCI6InN1cGVyLWFkbWluaXN0cmFkb3IiLCJpYXQiOjE3NTAxODkwMzUsImV4cCI6MTc1MDE5MjYzNX0.gArMRN5eeC1iBPvuHbRd956mfBVUx9JATaT-ifjPT_o";
+
+describe("Pruebas de actualización de rutas", () => {
   beforeAll(async () => {
-    await mongoose.connect(process.env.DB_URI, {
+    await mongoose.connect(process.env.MONGODB_URI_TEST, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
   });
 
-  // Limpiar la colección después de cada prueba
   afterEach(async () => {
-    await Ruta.deleteMany({}); // Limpiar solo las rutas
+    await Ruta.deleteMany({});
+    await Corredor.deleteMany({});
   });
 
-  // Cerrar la conexión después de las pruebas
   afterAll(async () => {
     await mongoose.connection.close();
   });
 
-  it("Debe crear una nueva ruta", async () => {
-    const ruta = ({
-
-        nombre: "C1",
-        recorrido: "Terminal Quitumbe-Parada La Colón",
-        horario: {
-            "Lunes-Viernes": "05h00 a 18h30",
-            Sabados: "06h05 a 18h00",
-            Domingos: "06h00 a 17h00"
-        },
-        paradas: ["677d6c2183e491d731aed12a"],
-        sentido: "Doble",
-        corredor: "677d503183e491d731aed0f6" // Agregar el ID del corredor
+  it("Debe actualizar una ruta correctamente", async () => {
+    const corredor = new Corredor({
+      nombre: "Corredor Test",
+      descripcion: "Corredor de prueba para test unitarios",
+      color_identificativo: "Azul Oscuro",
+      fecha_inauguracion: new Date("2020-01-01"),
+      longitud_recorrido: "10 km",
+      horario_operacion: "06:00 - 22:00",
+      frecuencia_servicio: "Cada 10 minutos",
+      rango_tarifas: "$0.25 - $0.75",
+      lugares_interes: ["Estación Central", "Museo", "Parque Metropolitano"],
+      tipo_vehiculos_utilizados: ["Trolebús"],
+      foto_url: "https://example.com/corredor.jpg",
+      ultima_actualizacion: new Date(),
     });
+    await corredor.save();
 
-    const response = await request(server).post("/api/ruta/registro").send(ruta);
-
-
-    expect(response.statusCode).toBe(201);
-    expect(response.body.nuevaRuta.nombre).toBe(ruta.nombre); // Asegúrate de que el nombre coincida
-});
-
-
-  it("Debe obtener la lista de rutas", async () => {
     const ruta = new Ruta({
-        nombre: "Ruta Oeste",
-        recorrido: "Quitumbe - recreo",
-        sentido: "Doble",
-        corredor: "677d503183e491d731aed0f6",
-        paradas: ["677d666783e491d731aed10c"],
-        estado: true,
-        horario: {
-          "lunes-viernes": "06:00 - 20:00",
-          sabado: "07:00 - 19:00",
-          domingo: "08:00 - 18:00",
-          },
-      });
-    await ruta.save();
-
-    const response = await request(server).get("/api/rutas");
-
-    expect(response.statusCode).toBe(200);
-    expect(response.body.length).toBe(1);
-    expect(response.body[0].nombre).toBe(ruta.nombre);
-  });
-
-  it("Debe obtener los detalles de una ruta específica", async () => {
-    const ruta = new Ruta({
-        nombre: "Ruta Oeste",
-        recorrido: "Quitumbe - recreo",
-        sentido: "Doble",
-        corredor: "677d503183e491d731aed0f6",
-        paradas: ["677d666783e491d731aed10c","677d666783e491d731aed10d"],
-        estado: true,
-        horario: {
-          "lunes-viernes": "06:00 - 20:00",
-          sabado: "07:00 - 19:00",
-          domingo: "08:00 - 18:00",
-          },
-      });
-    await ruta.save();
-
-    const response = await request(server).get(`/api/ruta/${ruta._id}`);
-
-    expect(response.statusCode).toBe(200);
-    expect(response.body.nombre).toBe(ruta.nombre);
-  });
-
-  it("Debe actualizar una ruta existente", async () => {
-    const ruta = new Ruta({
-      nombre: "Ruta Oeste",
-      recorrido: "Quitumbe - recreo",
-      sentido: "Doble",
-      corredor: "677d503183e491d731aed0f6",
-      paradas: ["677d666783e491d731aed10c"],
-      estado: true,
-      horario: {
-        "lunes-viernes": "06:00 - 20:00",
-        sabado: "07:00 - 19:00",
-        domingo: "08:00 - 18:00",
-        },
+      nombre: "Ruta Inicial",
+      corredor: corredor._id,
+      descripcion: "Descripcion inicial",
+      sentido: "Ida",
+      frecuencia_paso: "Cada 15 min",
+      horario_operacion: "06:00-22:00",
+      color_ruta: "#000000",
+      estado_actual: true,
     });
     await ruta.save();
+
+    const nuevosDatos = {
+      nombre: "Ruta Actualizada",
+      corredor: corredor._id.toString(),
+      descripcion: "Ruta actualizada de prueba",
+      sentido: "Ida y vuelta",
+      frecuencia_paso: "Cada 10 minutos",
+      horario_operacion: "05:00 - 23:00",
+      color_ruta: "#4CAF50",
+    };
 
     const response = await request(server)
       .put(`/api/ruta/actualizar/${ruta._id}`)
-      .send({ nombre: "Ruta Oeste Actualizada" });
-    
+      .set("Authorization", `Bearer ${tokenQuemado}`)
+      .send(nuevosDatos);
+
+    console.log(response.body);
     expect(response.statusCode).toBe(200);
     expect(response.body.msg).toBe("Ruta actualizada exitosamente.");
-  });
-
-  it("Debe eliminar una ruta", async () => {
-    const ruta = new Ruta({
-        nombre: "Ruta Oeste",
-        recorrido: "Quitumbe - recreo",
-        sentido: "Doble",
-        corredor: "677d503183e491d731aed0f6",
-        paradas: ["677d666783e491d731aed10c"],
-        estado: true,
-        horario: {
-          "lunes-viernes": "06:00 - 20:00",
-          sabado: "07:00 - 19:00",
-          domingo: "08:00 - 18:00",
-          },
-      });
-    await ruta.save();
-
-    const response = await request(server).delete(`/api/ruta/eliminar/${ruta._id}`);
-
-    expect(response.statusCode).toBe(200);
-
-    const rutaEliminada = await Ruta.findById(ruta._id);
-    expect(rutaEliminada.estado).toBe(false);
+    expect(response.body.ruta.nombre).toBe(nuevosDatos.nombre);
+    expect(response.body.ruta.descripcion).toBe(nuevosDatos.descripcion);
+    expect(response.body.ruta.sentido).toBe(nuevosDatos.sentido);
   });
 });

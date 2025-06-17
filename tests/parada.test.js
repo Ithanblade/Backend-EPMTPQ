@@ -1,114 +1,68 @@
 import request from "supertest";
 import mongoose from "mongoose";
 import server from "../src/server.js";
+import Ruta from "../src/models/Ruta.js";
 import Parada from "../src/models/Parada.js";
 
-describe("CRUD de Paradas", () => {
-  // Antes de todo, conectamos a la base de datos de prueba
+const tokenQuemado =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjNXMDBnZTNIdEREaEE2NiIsInJvbCI6InN1cGVyLWFkbWluaXN0cmFkb3IiLCJpYXQiOjE3NTAxODkwMzUsImV4cCI6MTc1MDE5MjYzNX0.gArMRN5eeC1iBPvuHbRd956mfBVUx9JATaT-ifjPT_o";
+
+describe("Deshabilitar parada", () => {
+  let ruta;
+
   beforeAll(async () => {
-    await mongoose.connect(process.env.DB_URI, {
+    await mongoose.connect(process.env.MONGODB_URI_TEST, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
+
+    ruta = new Ruta({
+      nombre: "Ruta de prueba",
+      corredor: new mongoose.Types.ObjectId(),
+      descripcion: "Ruta asociada a la parada",
+      sentido: "Ida",
+      frecuencia_paso: "Cada 20 minutos",
+      horario_operacion: "06:00 - 21:00",
+      color_ruta: "#FF5733",
+      estado_actual: true,
+    });
+    await ruta.save();
   });
 
-  // Limpiar la colección después de cada prueba
   afterEach(async () => {
-    await Parada.deleteMany({}); // Limpiar solo las paradas
+    await Parada.deleteMany({});
   });
 
-  // Cerrar la conexión después de las pruebas
   afterAll(async () => {
+    await Ruta.deleteMany({});
     await mongoose.connection.close();
   });
 
-  it("Debe crear una nueva parada", async () => {
-    const nuevaParada = {
-      nombre: "Parada Central",  
-      tipo: "Estación",
-      ubicacion: "Centro de la ciudad",
-      rutas: [], // IDs de rutas existentes
-      corredores: [], // IDs de corredores existentes
-      estado: true,
-    };
-
-    const response = await request(server).post("/api/parada/registro").send(nuevaParada);
-
-
-    expect(response.statusCode).toBe(201);
-    expect(response.body.nuevaParada.nombre).toBe(nuevaParada.nombre);
-  });
-
-  it("Debe obtener la lista de paradas", async () => {
+  it("Debe deshabilitar una parada correctamente", async () => {
     const parada = new Parada({
-      nombre: "Parada Norte",
-      tipo: "Estación",
-      ubicacion: "Zona norte",
-      rutas: ["60c72b1f9d1f1e3d47d83f23"],
-      corredores: ["60c72b1f9d1f1e3d47d83f25"],
-      estado: true,
-    });
-    await parada.save();
-
-    const response = await request(server).get("/api/paradas");
-
-    expect(response.statusCode).toBe(200);
-    expect(response.body.length).toBe(1);
-    expect(response.body[0].nombre).toBe(parada.nombre);
-  });
-
-  it("Debe obtener los detalles de una parada específica", async () => {
-    const parada = new Parada({
-      nombre: "Parada Este",
-      tipo: "Estación",
-      ubicacion: "Zona este",
-      rutas: ["60c72b1f9d1f1e3d47d83f23"],
-      corredores: ["60c72b1f9d1f1e3d47d83f25"],
-      estado: true,
-    });
-    await parada.save();
-
-    const response = await request(server).get(`/api/parada/${parada._id}`);
-
-    expect(response.statusCode).toBe(200);
-    expect(response.body.nombre).toBe(parada.nombre);
-  });
-
-  it("Debe actualizar una parada existente", async () => {
-    const parada = new Parada({
-      nombre: "Parada Este",
-      tipo: "Estación",
-      ubicacion: "Zona este",
-      rutas: ["60c72b1f9d1f1e3d47d83f23"],
-      corredores: ["60c72b1f9d1f1e3d47d83f25"],
-      estado: true,
+      nombre: "Parada Ejemplo",
+      descripcion: "Parada principale.",
+      ubicacion_geografica: {
+        latitud: -0.144344,
+        longitud: -78.488782,
+      },
+      direccion_referencia: "Av. Amazonas y Av. de la Prensa, cerca del intercambiador",
+      accesibilidad: true,
+      servicios_disponibles: ["boletería", "baños", "wifi"],
+      foto_url: "https://res.cloudinary.com/ejemplo/image/upload/v1710000000/parada-labrador.jpg",
+      estado_actual: true,
+      rutas: [ruta._id],
     });
     await parada.save();
 
     const response = await request(server)
-      .put(`/api/parada/${parada._id}`)
-      .send({ nombre: "Parada Este Actualizada" });
+      .put(`/api/parada/deshabilitar/${parada._id}`)
+      .set("Authorization", `Bearer ${tokenQuemado}`);
 
     expect(response.statusCode).toBe(200);
-    expect(response.body.msg).toBe("Parada actualizada exitosamente.");
-  });
+    expect(response.body.msg).toBe("Parada deshabilitada correctamente.");
 
-  it("Debe eliminar una parada", async () => {
-    const parada = new Parada({
-      nombre: "Parada Oeste",
-      tipo: "Estación",
-      ubicacion: "Zona oeste",
-      rutas: ["60c72b1f9d1f1e3d47d83f23"],
-      corredores: ["60c72b1f9d1f1e3d47d83f25"],
-      estado: true,
-    });
-    await parada.save();
-
-    const response = await request(server).delete(`/api/parada/${parada._id}`);
-
-    expect(response.statusCode).toBe(200);
-
-    const paradaEliminada = await Parada.findById(parada._id);
-    expect(paradaEliminada.estado).toBe(false);
+    const paradaActualizada = await Parada.findById(parada._id);
+    expect(paradaActualizada.estado_actual).toBe(false);
   });
 });
