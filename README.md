@@ -23,18 +23,18 @@ Accede al video explicativo de las funcionalidades del sistema:
 Para instalar el proyecto de forma local, sigue los siguientes pasos:
 
 1. Clona el repositorio:
-
+    ```bash
     git clone https://github.com/Ithanblade/Backend-EPMTPQ.git
 
 2. Accede a la carpeta del proyecto e instala las dependencias necesarias:
-
+    ```bash
     cd Backend-EPMTPQ
     npm install
 
 3. Crea un archivo .env con las variables de entorno necesarias (consulta el archivo env.example para más detalles).
 
 4. Ejecuta el servidor:
-
+    ```bash
     npm run dev
 
 
