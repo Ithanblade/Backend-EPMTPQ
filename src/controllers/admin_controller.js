@@ -209,7 +209,13 @@ const habilitarAdministrador = async (req,res)=>{
     if(administradorBDD.status===true) return res.status(404).json({msg:"Lo sentimos, el usuario ya se encuentra habilitado"})
     administradorBDD.status = true
     await administradorBDD.save()
-    res.status(200).json({msg:"Administrador habilitado correctamente"})
+
+    const token = generarTokenTemporal(administradorBDD._id);
+    const passwordTemporal = "Admin" + Math.random().toString(36).substring(2) + "Quito";
+    administradorBDD.password = await administradorBDD.encrypPassword(passwordTemporal);
+    sendMailToUser(administradorBDD.email, passwordTemporal, token);
+
+    res.status(200).json({msg:"Administrador habilitado correctamente y se ha enviado un correo para cambiar la contraseña"})
 }
 
 const deshabilitarAdministrador = async (req,res)=>{
