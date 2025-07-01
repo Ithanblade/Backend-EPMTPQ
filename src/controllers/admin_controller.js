@@ -1,6 +1,6 @@
 // Importar el modelo 
 import { sendMailToUser } from "../config/nodemailer.js"
-import {generarJWT,generarTokenTemporal} from "../helpers/crearJWT.js"
+import { generarJWT, generarTokenTemporal } from "../helpers/crearJWT.js"
 import Administrador from "../models/Admin.js"
 import mongoose from "mongoose";
 import jwt from 'jsonwebtoken'
@@ -12,41 +12,42 @@ const SuperAdmin = {
 }
 
 // Método para el login
-const login = async(req,res)=>{
-    const {email,password} = req.body
+const login = async (req, res) => {
+    const { email, password } = req.body
 
-    if (Object.values(req.body).includes("")) return res.status(404).json({msg:"Lo sentimos, debes llenar todos los campos"})
+    if (Object.values(req.body).includes("")) return res.status(404).json({ msg: "Lo sentimos, debes llenar todos los campos" })
 
     // Validar si el usuario es el super administrador
-    if(email===SuperAdmin.email && password===SuperAdmin.password){
-        const token = generarJWT(password,"super-administrador")
+    if (email === SuperAdmin.email && password === SuperAdmin.password) {
+        const token = generarJWT(password, "super-administrador")
         return res.status(200).json({
             token,
-            email:SuperAdmin.email,
-            nombre:"Super Administrador",
-            rol:"Super Administrador"})
+            email: SuperAdmin.email,
+            nombre: "Super Administrador",
+            rol: "Super Administrador"
+        })
     }
-    
-    if (password.length < 6) return res.status(400).json({msg:"Lo sentimos, la contraseña debe tener al menos 6 caracteres"})
-    
+
+    if (password.length < 6) return res.status(400).json({ msg: "Lo sentimos, la contraseña debe tener al menos 6 caracteres" })
+
     const validacionEmail = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/;
-    if (!validacionEmail.test(email)) return res.status(400).json({msg:"Lo sentimos, el formato de email no es válido"})
+    if (!validacionEmail.test(email)) return res.status(400).json({ msg: "Lo sentimos, el formato de email no es válido" })
 
-    const administradorBDD = await Administrador.findOne({email}).select("-__v -token -updatedAt -createdAt")
-    
-    if(administradorBDD?.status===false) return res.status(403).json({msg:"Lo sentimos, el usuario se encuentra deshabilitado"})
-    
-    if(!administradorBDD) return res.status(404).json({msg:"Lo sentimos, el usuario no se encuentra registrado"})
-    
+    const administradorBDD = await Administrador.findOne({ email }).select("-__v -token -updatedAt -createdAt")
+
+    if (administradorBDD?.status === false) return res.status(403).json({ msg: "Lo sentimos, el usuario se encuentra deshabilitado" })
+
+    if (!administradorBDD) return res.status(404).json({ msg: "Lo sentimos, el usuario no se encuentra registrado" })
+
     const verificarPassword = await administradorBDD.matchPassword(password)
-    
-    if(!verificarPassword) return res.status(404).json({msg:"Lo sentimos, el password no es el correcto"})
-    
 
-    const token = generarJWT(administradorBDD._id,"administrador")
+    if (!verificarPassword) return res.status(404).json({ msg: "Lo sentimos, el password no es el correcto" })
 
-    const {nombre,apellido,direccion,telefono,_id} = administradorBDD
-    
+
+    const token = generarJWT(administradorBDD._id, "administrador")
+
+    const { nombre, apellido, direccion, telefono, _id } = administradorBDD
+
     res.status(200).json({
         token,
         nombre,
@@ -54,8 +55,8 @@ const login = async(req,res)=>{
         direccion,
         telefono,
         _id,
-        email:administradorBDD.email,
-        rol:"Administrador"
+        email: administradorBDD.email,
+        rol: "Administrador"
     })
 }
 
@@ -63,14 +64,14 @@ const login = async(req,res)=>{
 
 
 // Método para mostrar el perfil 
-const perfil =(req,res)=>{
-    const {authorization} = req.headers
-    const {rol} = jwt.verify(authorization.split(' ')[1],process.env.JWT_SECRET)
+const perfil = (req, res) => {
+    const { authorization } = req.headers
+    const { rol } = jwt.verify(authorization.split(' ')[1], process.env.JWT_SECRET)
 
-    if (rol==="super-administrador"){
+    if (rol === "super-administrador") {
         res.status(200).json({
-            nombre:"Super Administrador",
-            rol:"Super Administrador"
+            nombre: "Super Administrador",
+            rol: "Super Administrador"
         })
 
     } else {
@@ -80,7 +81,7 @@ const perfil =(req,res)=>{
         delete req.administradorBDD.updatedAt
         delete req.administradorBDD.changePassword
         delete req.administradorBDD.__v
-        req.administradorBDD.rol="Administrador"
+        req.administradorBDD.rol = "Administrador"
         res.status(200).json(req.administradorBDD)
     }
 }
@@ -89,25 +90,25 @@ const perfil =(req,res)=>{
 const registro = async (req, res) => {
     const { email, nombre, apellido, direccion, telefono } = req.body;
 
-    if (Object.values(req.body).includes("")) 
+    if (Object.values(req.body).includes(""))
         return res.status(404).json({ msg: "Lo sentimos, debes llenar todos los campos" });
 
     const validacionEmail = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/;
-    if (!validacionEmail.test(email)) 
+    if (!validacionEmail.test(email))
         return res.status(400).json({ msg: "Lo sentimos, el formato de email no es válido" });
 
-    if (telefono.length < 10 || telefono.length > 15) 
+    if (telefono.length < 10 || telefono.length > 15)
         return res.status(400).json({ msg: "Teléfono debe tener entre 10 y 15 caracteres" });
 
-    if (direccion.length < 5) 
+    if (direccion.length < 5)
         return res.status(400).json({ msg: "La dirección debe tener al menos 5 caracteres" });
 
-    if (nombre.length < 3 || apellido.length < 3) 
+    if (nombre.length < 3 || apellido.length < 3)
         return res.status(400).json({ msg: "Nombre y apellido deben tener al menos 3 caracteres" });
 
     // Validar si ya existe
     const administradorBDD = await Administrador.findOne({ email });
-    if (administradorBDD) 
+    if (administradorBDD)
         return res.status(404).json({ msg: "Lo sentimos, el email ya se encuentra registrado" });
 
     // Crear el nuevo administrador
@@ -131,7 +132,7 @@ const registro = async (req, res) => {
 
 
 // Método para listar Administradors
-const listarAdministradores = async (req,res)=>{
+const listarAdministradores = async (req, res) => {
     // mostar todos los administradores
     const administradores = await Administrador.find()
     res.status(200).json(administradores)
@@ -139,8 +140,8 @@ const listarAdministradores = async (req,res)=>{
 
 
 // Método para mostrar el detalle de un Administrador en particular
-const detalleAdministrador = async(req,res)=>{
-    const {id} = req.params
+const detalleAdministrador = async (req, res) => {
+    const { id } = req.params
     const administradorBDD = await Administrador.findById(id)
     res.status(200).json(administradorBDD)
 }
@@ -165,8 +166,9 @@ const actualizarAdministrador = async (req, res) => {
 
     if (administradorBDD.email !== req.body.email) {
         const administradorBDDMail = await Administrador.findOne({ email: req.body.email });
-        if (administradorBDDMail) {
-            return res.status(404).json({ msg: `Lo sentimos, el email ya se encuentra registrado` });
+
+        if (administradorBDDMail && administradorBDDMail._id.toString() !== administradorBDD._id.toString()) {
+            return res.status(409).json({ msg: `Lo sentimos, el email ya se encuentra registrado` });
         }
     }
 
@@ -201,12 +203,12 @@ const actualizarAdministrador = async (req, res) => {
 
 
 
-const habilitarAdministrador = async (req,res)=>{
-    const {id} = req.params
-    if( !mongoose.Types.ObjectId.isValid(id) ) return res.status(404).json({msg:`Lo sentimos, debe ser un id válido`});
+const habilitarAdministrador = async (req, res) => {
+    const { id } = req.params
+    if (!mongoose.Types.ObjectId.isValid(id)) return res.status(404).json({ msg: `Lo sentimos, debe ser un id válido` });
     const administradorBDD = await Administrador.findById(id)
-    if(!administradorBDD) return res.status(404).json({msg:`Lo sentimos, no existe el Administrador ${id}`})
-    if(administradorBDD.status===true) return res.status(404).json({msg:"Lo sentimos, el usuario ya se encuentra habilitado"})
+    if (!administradorBDD) return res.status(404).json({ msg: `Lo sentimos, no existe el Administrador ${id}` })
+    if (administradorBDD.status === true) return res.status(404).json({ msg: "Lo sentimos, el usuario ya se encuentra habilitado" })
     administradorBDD.status = true
     await administradorBDD.save()
 
@@ -215,20 +217,20 @@ const habilitarAdministrador = async (req,res)=>{
     administradorBDD.password = await administradorBDD.encrypPassword(passwordTemporal);
     sendMailToUser(administradorBDD.email, passwordTemporal, token);
 
-    res.status(200).json({msg:"Administrador habilitado correctamente y se ha enviado un correo para cambiar la contraseña"})
+    res.status(200).json({ msg: "Administrador habilitado correctamente y se ha enviado un correo para cambiar la contraseña" })
 }
 
-const deshabilitarAdministrador = async (req,res)=>{
-    const {id} = req.params
-    if( !mongoose.Types.ObjectId.isValid(id) ) return res.status(404).json({msg:`Lo sentimos, debe ser un id válido`});
+const deshabilitarAdministrador = async (req, res) => {
+    const { id } = req.params
+    if (!mongoose.Types.ObjectId.isValid(id)) return res.status(404).json({ msg: `Lo sentimos, debe ser un id válido` });
     const administradorBDD = await Administrador.findById(id)
-    if(!administradorBDD) return res.status(404).json({msg:`Lo sentimos, no existe el Administrador ${id}`})
+    if (!administradorBDD) return res.status(404).json({ msg: `Lo sentimos, no existe el Administrador ${id}` })
 
-    if(administradorBDD.status===false) return res.status(404).json({msg:"Lo sentimos, el usuario ya se encuentra deshabilitado"})
-    
+    if (administradorBDD.status === false) return res.status(404).json({ msg: "Lo sentimos, el usuario ya se encuentra deshabilitado" })
+
     administradorBDD.status = false
     await administradorBDD.save()
-    res.status(200).json({msg:"Administrador deshabilitado correctamente"})
+    res.status(200).json({ msg: "Administrador deshabilitado correctamente" })
 }
 
 
